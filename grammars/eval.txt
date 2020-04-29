@@ -1,0 +1,43 @@
+@verbatim {
+
+    class RuleHandler:
+        def integer(self, node):
+            return int(node)
+
+        def expr(self, node):
+            if isinstance(node, dict):
+                if node["op"] == "+":
+                    return node["left"] + node["right"]
+                else:
+                    return node["left"] - node["right"]
+            else:
+                return node
+
+        def term(self, node):
+            if isinstance(node, dict):
+                if node["op"] == "*":
+                    return node["left"] * node["right"]
+                else:
+                    return node["left"] / node["right"]
+            else:
+                return node
+
+        def atom(self, node):
+            if isinstance(node, list):
+                return node[1]
+            return node
+}
+
+@rule_handler RuleHandler
+
+integer: r"[0-9]+"
+
+expr: left:expr op:'+' right:term
+    | left:expr op:'-' right:term
+    | term
+
+term: left:term op:'*' right:atom
+    | left:term op:'/' right:atom
+    | atom
+
+atom: integer | '(' expr ')'

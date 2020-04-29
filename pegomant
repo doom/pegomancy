@@ -1,0 +1,11 @@
+#!/usr/bin/env python3.8
+
+import argparse
+from pegomancy.generate import ParserGenerator
+
+ap = argparse.ArgumentParser()
+ap.add_argument("grammar_file", type=str)
+
+args = ap.parse_args()
+
+ParserGenerator().generate_parser(args.grammar_file)

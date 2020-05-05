@@ -149,7 +149,7 @@ def left_recursive_parsing_rule(f):
         until it stops growing (it either fails or does not parse more data than the previous call).
 
         The approach is described by:
-        - "Parsers Can Support Left Recursion" (http://www.vpri.org/pdf/tr2007002_packrat.pdf)
+        - "Packrat Parsers Can Support Left Recursion" (http://www.vpri.org/pdf/tr2007002_packrat.pdf)
         - "Left-recursive PEG Grammars" (https://link.medium.com/njpbvhxsE5)
         """
         pos = self.mark()

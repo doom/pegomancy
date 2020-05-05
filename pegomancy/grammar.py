@@ -41,7 +41,7 @@ class RuleItem(AbstractItem):
 
 class Maybe(AbstractItem):
     def generate_condition(self) -> str:
-        return f"{self.target.generate_condition()} or True"
+        return f"({self.target.generate_condition()} or True)"
 
     @staticmethod
     def is_nested() -> bool:
@@ -93,7 +93,12 @@ class Rule:
 
 
 class Grammar:
-    def __init__(self, verbatim_prelude: List, rules: List[Rule], rule_handler: Optional[str]):
+    def __init__(
+            self,
+            verbatim_prelude: List,
+            rules: List[Rule],
+            rule_handler: Optional[str],
+    ):
         self.prelude = verbatim_prelude
         self.rules = rules
         self.rule_handler = rule_handler

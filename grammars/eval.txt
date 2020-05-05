@@ -1,4 +1,4 @@
-@verbatim {
+@verbatim %{
 
     class RuleHandler:
         def integer(self, node):
@@ -26,7 +26,7 @@
             if isinstance(node, list):
                 return node[1]
             return node
-}
+%}
 
 @rule_handler RuleHandler
 

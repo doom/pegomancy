@@ -97,7 +97,7 @@ class RawTextParser(BaseParser):
         :param regex:               the regular expression to match
         :return:                    the matched string if any, otherwise None
         """
-        match = re.match(regex, self.data[self.cursor:], flags=re.MULTILINE)
+        match = re.match(regex, self.data[self.cursor:], flags=re.MULTILINE | re.DOTALL)
         if match is None:
             return None
         self.cursor += match.end(0)

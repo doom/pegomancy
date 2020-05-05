@@ -1,4 +1,5 @@
-from .grammar_parser import *
+from .grammar import AbstractItem, Alternative, Grammar, Rule, RuleItem
+from .grammar_parser import GrammarParser as GrammarParser
 
 
 class ParserGenerator:
@@ -6,8 +7,8 @@ class ParserGenerator:
         print("    def _wrap_node(self, rule_name, values):")
         print("        if isinstance(values, list) and len(values) == 1:")
         print("            values = values[0]")
-        print("        if self.rule_handler is not None and hasattr(self.rule_handler, rule_name):")
-        print("            values = getattr(self.rule_handler, rule_name)(values)")
+        print("        if self._rule_handler is not None and hasattr(self._rule_handler, rule_name):")
+        print("            values = getattr(self._rule_handler, rule_name)(values)")
         print("        return values")
 
     def _generate_named_alternative(self, alt: Alternative, rule: Rule):
@@ -64,9 +65,9 @@ class ParserGenerator:
         print("    def __init__(self, data):")
         print("        super().__init__(data)")
         if grammar.rule_handler is not None:
-            print(f"        self.rule_handler = {grammar.rule_handler}()")
+            print(f"        self._rule_handler = {grammar.rule_handler}()")
         else:
-            print(f"        self.rule_handler = None")
+            print(f"        self._rule_handler = None")
 
     def _generate_repeat_method(self):
         print("    def repeat(self, minimum, f, *args):")
@@ -80,12 +81,12 @@ class ParserGenerator:
         print("        return None")
         print()
 
-    def _generate_parser_class(self, grammar: Grammar):
+    def generate_parser(self, grammar: Grammar, class_name: str = "Parser"):
         print(f"from pegomancy.parse import RawTextParser, parsing_rule, left_recursive_parsing_rule")
         for verbatim in grammar.prelude:
             print(verbatim)
         print("\n")
-        print(f"class Parser(RawTextParser):")
+        print(f"class {class_name}(RawTextParser):")
         self._generate_init(grammar)
         self._generate_wrap_node()
         self._generate_repeat_method()
@@ -93,7 +94,7 @@ class ParserGenerator:
         for rule in rules:
             self._generate_rule(rule)
 
-    def generate_parser(self, grammar_path: str):
+    def generate_parser_from_file(self, grammar_path: str, class_name: str = "Parser"):
         from functools import reduce
         data = open(grammar_path, "r").read()
         data = reduce(
@@ -105,4 +106,4 @@ class ParserGenerator:
         result = gp.grammar()
         if result is None:
             raise ValueError("invalid grammar")
-        self._generate_parser_class(result)
+        self.generate_parser(result, class_name)

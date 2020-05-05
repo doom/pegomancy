@@ -1,0 +1,116 @@
+@verbatim %{
+    from pegomancy.grammar import Grammar, Rule, Alternative, RuleItem, RegexItem, LiteralItem, Maybe, OneOrMore, ZeroOrMore
+    from textwrap import dedent
+
+    class GrammarParserRuleHandler:
+        def __init__(self, *args, **kwargs):
+            self.synthesized_rules = []
+
+        def _synthesize_rule(self, alts):
+            rule = Rule(f"synthesized_rule_{len(self.synthesized_rules)}", alts)
+            self.synthesized_rules.append(rule)
+            return rule.name
+
+        def rule_name(self, node):
+            return node
+
+        def literal(self, node):
+            return LiteralItem(node[1])
+
+        def regex(self, node):
+            return RegexItem(node[1].target)
+
+        def atom(self, node):
+            if isinstance(node, dict):
+                if "parenthesized_alts" in node:
+                    node["rule_name"] = self._synthesize_rule(node["parenthesized_alts"])
+                return RuleItem(node["rule_name"])
+            return node
+
+        def maybe(self, node):
+            return Maybe(node["atom"])
+
+        def one_or_more(self, node):
+            return OneOrMore(node["atom"])
+
+        def zero_or_more(self, node):
+            return ZeroOrMore(node["atom"])
+
+        def named_item(self, node):
+            item = node["item"]
+            name = node.get("name")
+            if name is not True:
+                item.name = name["name"]
+            return item
+
+        def alternative(self, node):
+            return Alternative(node)
+
+        def alternatives(self, node):
+            alts = node.get("alts") or []
+            return alts + [node.get("alt")]
+
+        def rule(self, node):
+            alts = node["alts"]
+            return Rule(node["name"], alts)
+
+        def verbatim_block(self, node):
+            return dedent(node["block"])
+
+        def rule_handler(self, node):
+            return node["handler"]
+
+        def setting(self, node):
+            return node["setting"]
+
+        def grammar(self, node):
+            verbatim = node["verbatim"]
+            rule_handler = node["handler"] if node["handler"] is not True else None
+            settings = {setting: True for setting in node["settings"]}
+            rules = self.synthesized_rules + node["rules"]
+            return Grammar(verbatim, rules, rule_handler, **settings)
+%}
+
+@rule_handler GrammarParserRuleHandler
+
+_: r"[ \t]+"?
+
+__: r"[ \n\t]+"?
+
+verbatim_block: "@verbatim" _ "%{" block:r"^(.*?)(?=%})" "%}" "\n"
+
+rule_handler: "@rule_handler" r"[ \t]+" handler:r"[a-zA-Z_][a-zA-Z0-9_]*" "\n"
+
+setting: "@set" r"[ \t]+" setting:r"[a-zA-Z_][a-zA-Z0-9_]*" "\n"
+
+rule_name: r"[a-zA-Z_][a-zA-Z0-9_]*"
+
+literal: '"' r'[^"]*' '"' | "'" r"[^']*" "'"
+
+regex: 'r' literal
+
+atom: regex | literal | rule_name:rule_name | '(' _ parenthesized_alts:alternatives _ ')'
+
+maybe: atom:atom '?'
+
+one_or_more: atom:atom '+'
+
+zero_or_more: atom:atom '*'
+
+lookahead: '&' item
+
+negative_lookahead: '!' item
+
+item: maybe | one_or_more | zero_or_more | lookahead | negative_lookahead | atom
+
+named_item: name:(name:r"[a-zA-Z_][a-zA-Z0-9_]*" ':')? item:item
+
+itemsp: named_item _
+
+alternative: _ itemsp+
+
+alternatives: alts:alternatives __ '|' _ alt:alternative | _ alt:alternative
+
+rule: name:rule_name ':' _ alts:alternatives '\n'
+
+grammar: verbatim:verbatim_block* handler:rule_handler? settings:setting* rules:rule+

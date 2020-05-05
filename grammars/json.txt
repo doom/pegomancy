@@ -1,4 +1,4 @@
-@verbatim {
+@verbatim %{
 
     from functools import reduce
 
@@ -24,16 +24,16 @@
             return []
 
         def field(self, node):
-            return dict([(node["key"], node["value"])])
+            return {node["key"]: node["value"]}
 
         def object(self, node):
             fields = node["fields"]
             if isinstance(fields, list):
                 if len(fields) == 1:
                     return fields[0]
-                return reduce(lambda acc, new: dict(**acc, **new["field"]), fields[1], fields[0])
-            return dict()
-}
+                return reduce(lambda acc, new: {**acc, **new["field"]}, fields[1], fields[0])
+            return {}
+%}
 
 @rule_handler JSONRuleHandler
 

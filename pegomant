@@ -5,7 +5,11 @@ from pegomancy.generate import ParserGenerator
 
 ap = argparse.ArgumentParser()
 ap.add_argument("grammar_file", type=str)
+ap.add_argument("-c", "--class_name", type=str)
 
 args = ap.parse_args()
 
-ParserGenerator().generate_parser(args.grammar_file)
+if args.class_name:
+    ParserGenerator().generate_parser_from_file(args.grammar_file, args.class_name)
+else:
+    ParserGenerator().generate_parser_from_file(args.grammar_file)

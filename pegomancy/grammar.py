@@ -50,7 +50,7 @@ class Maybe(AbstractItem):
 
 class ZeroOrMore(AbstractItem):
     def generate_condition(self) -> str:
-        return f"self.repeat(0, lambda *args: {self.target.generate_condition()})"
+        return f"self._repeat(0, lambda *args: {self.target.generate_condition()})"
 
     @staticmethod
     def is_nested() -> bool:
@@ -59,7 +59,25 @@ class ZeroOrMore(AbstractItem):
 
 class OneOrMore(AbstractItem):
     def generate_condition(self) -> str:
-        return f"self.repeat(1, lambda *args: {self.target.generate_condition()})"
+        return f"self._repeat(1, lambda *args: {self.target.generate_condition()})"
+
+    @staticmethod
+    def is_nested() -> bool:
+        return True
+
+
+class Lookahead(AbstractItem):
+    def generate_condition(self) -> str:
+        return f"self._lookahead(lambda *args: {self.target.generate_condition()})"
+
+    @staticmethod
+    def is_nested() -> bool:
+        return True
+
+
+class NegativeLookahead(AbstractItem):
+    def generate_condition(self) -> str:
+        return f"not self._lookahead(lambda *args: {self.target.generate_condition()})"
 
     @staticmethod
     def is_nested() -> bool:

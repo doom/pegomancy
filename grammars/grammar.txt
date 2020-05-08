@@ -1,9 +1,9 @@
 @verbatim %{
-    from pegomancy.grammar import Grammar, Rule, Alternative, RuleItem, RegexItem, LiteralItem, Maybe, OneOrMore, ZeroOrMore
+    from pegomancy.grammar import Grammar, Rule, Alternative, RuleItem, RegexItem, LiteralItem, Maybe, OneOrMore, ZeroOrMore, Lookahead, NegativeLookahead
     from textwrap import dedent
 
     class GrammarParserRuleHandler:
-        def __init__(self, *args, **kwargs):
+        def __init__(self):
             self.synthesized_rules = []
 
         def _synthesize_rule(self, alts):
@@ -19,6 +19,12 @@
 
         def regex(self, node):
             return RegexItem(node[1].target)
+
+        def lookahead(self, node):
+            return Lookahead(node["item"])
+
+        def negative_lookahead(self, node):
+            return NegativeLookahead(node["item"])
 
         def atom(self, node):
             if isinstance(node, dict):
@@ -97,9 +103,9 @@ one_or_more: atom:atom '+'
 
 zero_or_more: atom:atom '*'
 
-lookahead: '&' item
+lookahead: '&' item:item
 
-negative_lookahead: '!' item
+negative_lookahead: '!' item:item
 
 item: maybe | one_or_more | zero_or_more | lookahead | negative_lookahead | atom
 

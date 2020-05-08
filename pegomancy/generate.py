@@ -70,7 +70,7 @@ class ParserGenerator:
             print(f"        self._rule_handler = None")
 
     def _generate_repeat_method(self):
-        print("    def repeat(self, minimum, f, *args):")
+        print("    def _repeat(self, minimum, f, *args):")
         print("        pos = self.mark()")
         print("        matches = []")
         print("        while (match := f(*args)) is not None:")
@@ -79,6 +79,14 @@ class ParserGenerator:
         print("            return matches")
         print("        self.rewind(pos)")
         print("        return None")
+        print()
+
+    def _generate_lookahead_method(self):
+        print("    def _lookahead(self, f, *args):")
+        print("        pos = self.mark()")
+        print("        result = f(*args)")
+        print("        self.rewind(pos)")
+        print("        return result")
         print()
 
     def generate_parser(self, grammar: Grammar, class_name: str = "Parser"):
@@ -90,6 +98,7 @@ class ParserGenerator:
         self._generate_init(grammar)
         self._generate_wrap_node()
         self._generate_repeat_method()
+        self._generate_lookahead_method()
         rules = grammar.rules
         for rule in rules:
             self._generate_rule(rule)

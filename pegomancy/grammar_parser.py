@@ -1,6 +1,8 @@
 from pegomancy.parse import RawTextParser, parsing_rule, left_recursive_parsing_rule
 
-from pegomancy.grammar import Grammar, Rule, Alternative, RuleItem, RegexItem, LiteralItem, Maybe, OneOrMore, ZeroOrMore
+from pegomancy.grammar import \
+    Grammar, Rule, Alternative, RuleItem, RegexItem, LiteralItem, Maybe, \
+    OneOrMore, ZeroOrMore, Lookahead, NegativeLookahead
 from textwrap import dedent
 
 
@@ -21,6 +23,12 @@ class GrammarParserRuleHandler:
 
     def regex(self, node):
         return RegexItem(node[1].target)
+
+    def lookahead(self, node):
+        return Lookahead(node["item"])
+
+    def negative_lookahead(self, node):
+        return NegativeLookahead(node["item"])
 
     def atom(self, node):
         if isinstance(node, dict):
@@ -85,7 +93,7 @@ class GrammarParser(RawTextParser):
             values = getattr(self._rule_handler, rule_name)(values)
         return values
 
-    def repeat(self, minimum, f, *args):
+    def _repeat(self, minimum, f, *args):
         pos = self.mark()
         matches = []
         while (match := f(*args)) is not None:
@@ -94,6 +102,12 @@ class GrammarParser(RawTextParser):
             return matches
         self.rewind(pos)
         return None
+
+    def _lookahead(self, f, *args):
+        pos = self.mark()
+        result = f(*args)
+        self.rewind(pos)
+        return result
 
     @parsing_rule
     def synthesized_rule_0(self):
@@ -273,10 +287,10 @@ class GrammarParser(RawTextParser):
     def lookahead(self):
         pos = self.mark()
         if (True
-                and (v0 := self.expect_string('&')) is not None
-                and (v1 := self.item()) is not None
+                and self.expect_string('&') is not None
+                and (item := self.item()) is not None
         ):
-            return self._wrap_node('lookahead', [v0, v1])
+            return self._wrap_node('lookahead', {'item': item})
         self.rewind(pos)
         return None
 
@@ -284,10 +298,10 @@ class GrammarParser(RawTextParser):
     def negative_lookahead(self):
         pos = self.mark()
         if (True
-                and (v0 := self.expect_string('!')) is not None
-                and (v1 := self.item()) is not None
+                and self.expect_string('!') is not None
+                and (item := self.item()) is not None
         ):
-            return self._wrap_node('negative_lookahead', [v0, v1])
+            return self._wrap_node('negative_lookahead', {'item': item})
         self.rewind(pos)
         return None
 
@@ -353,7 +367,7 @@ class GrammarParser(RawTextParser):
         pos = self.mark()
         if (True
                 and self._() is not None
-                and (v0 := self.repeat(1, lambda *args: self.itemsp())) is not None
+                and (v0 := self._repeat(1, lambda *args: self.itemsp())) is not None
         ):
             return self._wrap_node('alternative', [v0])
         self.rewind(pos)
@@ -397,10 +411,10 @@ class GrammarParser(RawTextParser):
     def grammar(self):
         pos = self.mark()
         if (True
-                and (verbatim := self.repeat(0, lambda *args: self.verbatim_block())) is not None
+                and (verbatim := self._repeat(0, lambda *args: self.verbatim_block())) is not None
                 and (handler := (self.rule_handler() or True)) is not None
-                and (settings := self.repeat(0, lambda *args: self.setting())) is not None
-                and (rules := self.repeat(1, lambda *args: self.rule())) is not None
+                and (settings := self._repeat(0, lambda *args: self.setting())) is not None
+                and (rules := self._repeat(1, lambda *args: self.rule())) is not None
         ):
             return self._wrap_node(
                 'grammar',

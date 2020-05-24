@@ -63,29 +63,21 @@
         def verbatim_block(self, node):
             return dedent(node["block"])
 
-        def rule_handler(self, node):
-            return node["handler"]
-
         def setting(self, node):
             return node["setting"]
 
         def grammar(self, node):
             verbatim = node["verbatim"]
-            rule_handler = node["handler"] if node["handler"] is not True else None
             settings = {setting: True for setting in node["settings"]}
             rules = self.synthesized_rules + node["rules"]
-            return Grammar(verbatim, rules, rule_handler, **settings)
+            return Grammar(verbatim, rules, **settings)
 %}
-
-@rule_handler GrammarParserRuleHandler
 
 _: r"[ \t]+"?
 
 __: r"[ \n\t]+"?
 
 verbatim_block: "@verbatim" _ "%{" block:r"^(.*?)(?=%})" "%}" "\n"
-
-rule_handler: "@rule_handler" r"[ \t]+" handler:r"[a-zA-Z_][a-zA-Z0-9_]*" "\n"
 
 setting: "@set" r"[ \t]+" setting:r"[a-zA-Z_][a-zA-Z0-9_]*" "\n"
 
@@ -119,4 +111,4 @@ alternatives: alts:alternatives __ '|' _ alt:alternative | _ alt:alternative
 
 rule: name:rule_name ':' _ alts:alternatives '\n'
 
-grammar: verbatim:verbatim_block* handler:rule_handler? settings:setting* rules:rule+
+grammar: verbatim:verbatim_block* settings:setting* rules:rule+

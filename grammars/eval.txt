@@ -1,6 +1,5 @@
 @verbatim %{
-
-    class RuleHandler:
+    class EvalRuleHandler:
         def integer(self, node):
             return int(node)
 
@@ -27,8 +26,6 @@
                 return node[1]
             return node
 %}
-
-@rule_handler RuleHandler
 
 integer: r"[0-9]+"
 

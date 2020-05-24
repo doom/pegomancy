@@ -7,10 +7,11 @@ class BaseParser:
     Base class for all parsers
     """
 
-    def __init__(self, data: Union[str, List]):
+    def __init__(self, data: Union[str, List], rule_handler=None):
         self.cache = {}
         self.data = data
         self.cursor = 0
+        self.rule_handler = rule_handler
 
     def mark(self) -> int:
         """

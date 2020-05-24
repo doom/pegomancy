@@ -1,5 +1,5 @@
 from .grammar import AbstractItem, Alternative, Grammar, Rule, RuleItem
-from .grammar_parser import GrammarParser as GrammarParser
+from .grammar_parser import GrammarParser as GrammarParser, GrammarParserRuleHandler
 
 
 class ParserGenerator:
@@ -7,8 +7,8 @@ class ParserGenerator:
         print("    def _wrap_node(self, rule_name, values):")
         print("        if isinstance(values, list) and len(values) == 1:")
         print("            values = values[0]")
-        print("        if self._rule_handler is not None and hasattr(self._rule_handler, rule_name):")
-        print("            values = getattr(self._rule_handler, rule_name)(values)")
+        print("        if self.rule_handler is not None and hasattr(self.rule_handler, rule_name):")
+        print("            values = getattr(self.rule_handler, rule_name)(values)")
         print("        return values")
 
     def _generate_named_alternative(self, alt: Alternative, rule: Rule):
@@ -61,14 +61,6 @@ class ParserGenerator:
         print(f"        return None")
         print()
 
-    def _generate_init(self, grammar: Grammar):
-        print("    def __init__(self, data):")
-        print("        super().__init__(data)")
-        if grammar.rule_handler is not None:
-            print(f"        self._rule_handler = {grammar.rule_handler}()")
-        else:
-            print(f"        self._rule_handler = None")
-
     def _generate_repeat_method(self):
         print("    def _repeat(self, minimum, f, *args):")
         print("        pos = self.mark()")
@@ -95,7 +87,6 @@ class ParserGenerator:
             print(verbatim)
         print("\n")
         print(f"class {class_name}(RawTextParser):")
-        self._generate_init(grammar)
         self._generate_wrap_node()
         self._generate_repeat_method()
         self._generate_lookahead_method()
@@ -111,7 +102,7 @@ class ParserGenerator:
             data[1:],
             data[0]
         )
-        gp = GrammarParser(data)
+        gp = GrammarParser(data, rule_handler=GrammarParserRuleHandler())
         result = gp.grammar()
         if result is None:
             raise ValueError("invalid grammar")

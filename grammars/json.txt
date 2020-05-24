@@ -1,5 +1,4 @@
 @verbatim %{
-
     from functools import reduce
 
     class JSONRuleHandler:
@@ -34,8 +33,6 @@
                 return reduce(lambda acc, new: {**acc, **new["field"]}, fields[1], fields[0])
             return {}
 %}
-
-@rule_handler JSONRuleHandler
 
 _: r"[ \n]*"?
 

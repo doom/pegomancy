@@ -1,8 +1,7 @@
 from pegomancy.parse import RawTextParser, parsing_rule, left_recursive_parsing_rule
 
-from pegomancy.grammar import \
-    Grammar, Rule, Alternative, RuleItem, RegexItem, LiteralItem, Maybe, \
-    OneOrMore, ZeroOrMore, Lookahead, NegativeLookahead
+from pegomancy.grammar import Grammar, Rule, Alternative, RuleItem, RegexItem, LiteralItem, Maybe, OneOrMore, \
+    ZeroOrMore, Lookahead, NegativeLookahead
 from textwrap import dedent
 
 
@@ -67,30 +66,22 @@ class GrammarParserRuleHandler:
     def verbatim_block(self, node):
         return dedent(node["block"])
 
-    def rule_handler(self, node):
-        return node["handler"]
-
     def setting(self, node):
         return node["setting"]
 
     def grammar(self, node):
         verbatim = node["verbatim"]
-        rule_handler = node["handler"] if node["handler"] is not True else None
         settings = {setting: True for setting in node["settings"]}
         rules = self.synthesized_rules + node["rules"]
-        return Grammar(verbatim, rules, rule_handler, **settings)
+        return Grammar(verbatim, rules, **settings)
 
 
 class GrammarParser(RawTextParser):
-    def __init__(self, data):
-        super().__init__(data)
-        self._rule_handler = GrammarParserRuleHandler()
-
     def _wrap_node(self, rule_name, values):
         if isinstance(values, list) and len(values) == 1:
             values = values[0]
-        if self._rule_handler is not None and hasattr(self._rule_handler, rule_name):
-            values = getattr(self._rule_handler, rule_name)(values)
+        if self.rule_handler is not None and hasattr(self.rule_handler, rule_name):
+            values = getattr(self.rule_handler, rule_name)(values)
         return values
 
     def _repeat(self, minimum, f, *args):
@@ -152,19 +143,6 @@ class GrammarParser(RawTextParser):
                 and self.expect_string('\n') is not None
         ):
             return self._wrap_node('verbatim_block', {'block': block})
-        self.rewind(pos)
-        return None
-
-    @parsing_rule
-    def rule_handler(self):
-        pos = self.mark()
-        if (True
-                and self.expect_string('@rule_handler') is not None
-                and self.expect_regex(r'[ \t]+') is not None
-                and (handler := self.expect_regex(r'[a-zA-Z_][a-zA-Z0-9_]*')) is not None
-                and self.expect_string('\n') is not None
-        ):
-            return self._wrap_node('rule_handler', {'handler': handler})
         self.rewind(pos)
         return None
 
@@ -412,13 +390,9 @@ class GrammarParser(RawTextParser):
         pos = self.mark()
         if (True
                 and (verbatim := self._repeat(0, lambda *args: self.verbatim_block())) is not None
-                and (handler := (self.rule_handler() or True)) is not None
                 and (settings := self._repeat(0, lambda *args: self.setting())) is not None
                 and (rules := self._repeat(1, lambda *args: self.rule())) is not None
         ):
-            return self._wrap_node(
-                'grammar',
-                {'verbatim': verbatim, 'handler': handler, 'settings': settings, 'rules': rules}
-            )
+            return self._wrap_node('grammar', {'verbatim': verbatim, 'settings': settings, 'rules': rules})
         self.rewind(pos)
         return None

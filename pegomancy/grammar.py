@@ -1,5 +1,5 @@
 from abc import abstractmethod, ABCMeta
-from typing import List, Optional
+from typing import List
 
 
 class AbstractItem(metaclass=ABCMeta):
@@ -115,11 +115,9 @@ class Grammar:
             self,
             verbatim_prelude: List,
             rules: List[Rule],
-            rule_handler: Optional[str],
     ):
         self.prelude = verbatim_prelude
         self.rules = rules
-        self.rule_handler = rule_handler
 
     def __repr__(self):
-        return f"Grammar(verbatim_imports={self.prelude!r}, rules={self.rules!r}, rule_handler={self.rule_handler!r})"
+        return f"Grammar(verbatim_imports={self.prelude!r}, rules={self.rules!r})"

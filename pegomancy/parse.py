@@ -1,5 +1,6 @@
-import re
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, Dict, List, Optional
+
+from .reader import Reader
 
 
 class BaseParser:
@@ -7,10 +8,18 @@ class BaseParser:
     Base class for all parsers
     """
 
-    def __init__(self, data: Union[str, List], rule_handler=None):
+    DEFAULT_WHITESPACE_REGEX = r"[ \t]+"
+
+    def __init__(
+            self,
+            text: str,
+            rule_handler=None,
+            *,
+            whitespace_regex: Optional[str] = DEFAULT_WHITESPACE_REGEX,
+            comments_regex: Optional[str] = None,
+    ):
         self.cache = {}
-        self.data = data
-        self.cursor = 0
+        self.reader = Reader(text, whitespace_regex=whitespace_regex, comments_regex=comments_regex)
         self.rule_handler = rule_handler
 
     def mark(self) -> int:
@@ -19,7 +28,7 @@ class BaseParser:
 
         :return:            the current position of the cursor
         """
-        return self.cursor
+        return self.reader.mark()
 
     def rewind(self, pos: int):
         """
@@ -27,18 +36,16 @@ class BaseParser:
 
         :param pos:         the position at which to rewind
         """
-        self.cursor = pos
+        self.reader.rewind(pos)
 
     def eof(self) -> bool:
-        return self.cursor == len(self.data)
+        return self.reader.eof()
 
-    def peek(self, offset: int = 0):
-        return self.data[self.cursor + offset]
+    def peek(self):
+        return self.reader.peek()
 
-    def get(self, offset: int = 0):
-        result = self.peek(offset)
-        self.cursor += 1
-        return result
+    def get(self):
+        return self.reader.get()
 
 
 class RawTextParser(BaseParser):
@@ -61,10 +68,8 @@ class RawTextParser(BaseParser):
         :param expected:            the expected string
         :return:                    the matched string if any, otherwise None
         """
-        if self.data[self.cursor:self.cursor + len(expected)] == expected:
-            self.cursor += len(expected)
-            return expected
-        return None
+        self.reader.consume_non_significant()
+        return self.reader.expect_string(expected)
 
     def expect_enclosed(self, opening: str, closing: str) -> Optional[str]:
         """
@@ -98,11 +103,7 @@ class RawTextParser(BaseParser):
         :param regex:               the regular expression to match
         :return:                    the matched string if any, otherwise None
         """
-        match = re.match(regex, self.data[self.cursor:], flags=re.MULTILINE | re.DOTALL)
-        if match is None:
-            return None
-        self.cursor += match.end(0)
-        return match.group(0)
+        return self.reader.expect_regex(regex)
 
 
 def parsing_rule(f):
@@ -114,6 +115,7 @@ def parsing_rule(f):
     """
 
     def wrapped_func(self: BaseParser, *args):
+        self.reader.consume_non_significant()
         pos = self.mark()
         position_cache = self.cache.get(pos)
         if position_cache is None:
@@ -153,6 +155,7 @@ def left_recursive_parsing_rule(f):
         - "Packrat Parsers Can Support Left Recursion" (http://www.vpri.org/pdf/tr2007002_packrat.pdf)
         - "Left-recursive PEG Grammars" (https://link.medium.com/njpbvhxsE5)
         """
+        self.reader.consume_non_significant()
         pos = self.mark()
         position_cache = self.cache.get(pos)
         if position_cache is None:

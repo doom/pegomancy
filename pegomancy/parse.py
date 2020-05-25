@@ -71,31 +71,6 @@ class RawTextParser(BaseParser):
         self.reader.consume_non_significant()
         return self.reader.expect_string(expected)
 
-    def expect_enclosed(self, opening: str, closing: str) -> Optional[str]:
-        """
-        Expect a string enclosed between two delimiters
-
-        :param opening:             the string to use as opening delimiter
-        :param closing:             the string to use as closing delimiter
-        :return:                    the matched string if any (without the delimiters), otherwise None
-        """
-        pos = self.mark()
-        if self.expect_string(opening) is not None:
-            s = self.read_while(lambda c: c != closing)
-            if self.expect_string(closing) is not None:
-                return s
-        self.rewind(pos)
-        return None
-
-    def expect_quoted(self, quote: str = '"') -> Optional[str]:
-        """
-        Expect a quoted string
-
-        :param quote:               the string to use as quote, default is '"'
-        :return:                    the matched string if any (without the quotes), otherwise None
-        """
-        return self.expect_enclosed(opening=quote, closing=quote)
-
     def expect_regex(self, regex: str) -> Optional[str]:
         """
         Expect a string matching a regular expression

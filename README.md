@@ -6,7 +6,7 @@ Yet another parsing thingy
 
 ### As a tool
 
-Pegomancy provides `pegomant` executable that can be used to generate Python code to parse data according to a given grammar.
+Pegomancy provides `pegomant` executable that can be used to generate Python code to parse data according to a given grammar specification.
 
 ```
 usage: pegomant [-h] grammar_file
@@ -24,7 +24,7 @@ The `pegomancy` module can be used as a library to fully control grammars and ho
 
 ## Grammar syntax
 
-Pegomancy grammars look like regular PEG grammars, with a dash of sugar syntax. Here is an example grammar that can be used to parse arithmetic expressions:
+Pegomancy grammars look like regular PEG grammars, with a dash of sugar syntax. Here is an example grammar specification that can be used to parse arithmetic expressions:
 
 ```
 integer: r"[0-9]+"

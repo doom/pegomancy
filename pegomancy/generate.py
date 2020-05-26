@@ -1,5 +1,4 @@
 from .grammar import AbstractItem, Alternative, Grammar, Rule, RuleItem
-from .grammar_parser import GrammarParser as GrammarParser, GrammarParserRuleHandler
 
 
 class ParserGenerator:
@@ -94,17 +93,3 @@ class ParserGenerator:
         rules = grammar.rules
         for rule in rules:
             self._generate_rule(rule)
-
-    def generate_parser_from_file(self, grammar_path: str, class_name: str = "Parser"):
-        from functools import reduce
-        data = open(grammar_path, "r").read()
-        data = reduce(
-            lambda acc, new: acc if new == "\n" == acc[-1] else acc + new,
-            data[1:],
-            data[0]
-        )
-        gp = GrammarParser(data, rule_handler=GrammarParserRuleHandler())
-        result = gp.grammar()
-        if result is None:
-            raise ValueError("invalid grammar")
-        self.generate_parser(result, class_name)

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3.8
 
 import argparse
+from functools import reduce
+from pegomancy.grammar import Grammar
 from pegomancy.generate import ParserGenerator
 
 ap = argparse.ArgumentParser()
@@ -9,7 +11,14 @@ ap.add_argument("-c", "--class_name", type=str)
 
 args = ap.parse_args()
 
-if args.class_name:
-    ParserGenerator().generate_parser_from_file(args.grammar_file, args.class_name)
-else:
-    ParserGenerator().generate_parser_from_file(args.grammar_file)
+with open(args.grammar_file, 'r') as grammar_file:
+    source = grammar_file.read()
+
+source = reduce(
+    lambda acc, new: acc if new == "\n" == acc[-1] else acc + new,
+    source[1:],
+    source[0]
+)
+
+grammar = Grammar.from_specification(source)
+ParserGenerator().generate_parser(grammar, class_name=args.class_name)

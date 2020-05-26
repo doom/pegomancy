@@ -81,7 +81,8 @@ class ParserGenerator:
         print("        return result")
         print()
 
-    def generate_parser(self, grammar: Grammar, class_name: str = "Parser"):
+    def generate_parser(self, grammar: Grammar, class_name: str = None):
+        class_name = class_name or "Parser"
         print(f"from pegomancy.parse import RawTextParser, parsing_rule, left_recursive_parsing_rule")
         for verbatim in grammar.prelude:
             print(verbatim)

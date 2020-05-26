@@ -37,16 +37,6 @@ class GrammarParser(RawTextParser):
         return None
 
     @parsing_rule
-    def _(self):
-        pos = self.mark()
-        if (True
-                and (v0 := (self.expect_regex(r'[ \t]+') or True)) is not None
-        ):
-            return self._wrap_node('_', [v0])
-        self.rewind(pos)
-        return None
-
-    @parsing_rule
     def __(self):
         pos = self.mark()
         if (True
@@ -61,7 +51,6 @@ class GrammarParser(RawTextParser):
         pos = self.mark()
         if (True
                 and self.expect_string('@verbatim') is not None
-                and self._() is not None
                 and self.expect_string('%{') is not None
                 and (block := self.expect_regex(r'^(.*?)(?=%})')) is not None
                 and self.expect_string('%}') is not None
@@ -144,9 +133,7 @@ class GrammarParser(RawTextParser):
         self.rewind(pos)
         if (True
                 and self.expect_string('(') is not None
-                and self._() is not None
                 and (parenthesized_alts := self.alternatives()) is not None
-                and self._() is not None
                 and self.expect_string(')') is not None
         ):
             return self._wrap_node('atom', {'parenthesized_alts': parenthesized_alts})
@@ -255,22 +242,10 @@ class GrammarParser(RawTextParser):
         return None
 
     @parsing_rule
-    def itemsp(self):
-        pos = self.mark()
-        if (True
-                and (v0 := self.named_item()) is not None
-                and self._() is not None
-        ):
-            return self._wrap_node('itemsp', [v0])
-        self.rewind(pos)
-        return None
-
-    @parsing_rule
     def alternative(self):
         pos = self.mark()
         if (True
-                and self._() is not None
-                and (v0 := self._repeat(1, lambda *args: self.itemsp())) is not None
+                and (v0 := self._repeat(1, lambda *args: self.named_item())) is not None
         ):
             return self._wrap_node('alternative', [v0])
         self.rewind(pos)
@@ -283,13 +258,11 @@ class GrammarParser(RawTextParser):
                 and (alts := self.alternatives()) is not None
                 and self.__() is not None
                 and self.expect_string('|') is not None
-                and self._() is not None
                 and (alt := self.alternative()) is not None
         ):
             return self._wrap_node('alternatives', {'alts': alts, 'alt': alt})
         self.rewind(pos)
         if (True
-                and self._() is not None
                 and (alt := self.alternative()) is not None
         ):
             return self._wrap_node('alternatives', {'alt': alt})
@@ -302,7 +275,6 @@ class GrammarParser(RawTextParser):
         if (True
                 and (name := self.rule_name()) is not None
                 and self.expect_string(':') is not None
-                and self._() is not None
                 and (alts := self.alternatives()) is not None
                 and self.expect_string('\n') is not None
         ):

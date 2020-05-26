@@ -198,5 +198,9 @@ class Grammar:
 
     @staticmethod
     def from_specification(text: str) -> 'Grammar':
-        grammar_parser = GrammarParser(text, rule_handler=GrammarParserRuleHandler())
+        grammar_parser = GrammarParser(
+            text,
+            comments_regex=r"#[^\n]*",
+            rule_handler=GrammarParserRuleHandler(),
+        )
         return grammar_parser.grammar()

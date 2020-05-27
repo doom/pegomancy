@@ -63,6 +63,8 @@ In the example grammar given above, we have different kinds of atoms:
 - `r"[0-9]+"`, matching a regular expression
 - `integer` (in the `atom` rule), matching what the `integer` rule matches
 
+Note that atoms can be concatenated: `'(' expr ')'` will match an opening parenthesis, then what the `expr` rule matches, then a closing parenthesis.
+
 #### Items
 
 Items are more complex expressions and introduce modifiers to repeat or make expressions optional:
@@ -70,16 +72,11 @@ Items are more complex expressions and introduce modifiers to repeat or make exp
 - the `+` operator can be used to allow repeating an expression one or more times
 - the `?` operator can be used to make an expression optional
 
-Items are unnamed by default, but can be named using the `:` operator, as in `op:'+'`, which gives the name
-`op` to the `'+'` atom.
-
-Note that atoms can be concatenated: `'(' expr ')'` will match an opening parenthesis, then what the `expr` rule
-matches, then a closing parenthesis.
+Items are unnamed by default, but can be named using the `:` operator, as in `op:'+'`, which gives the name `op` to the `'+'` atom.
 
 #### Alternatives
 
-Some rules might allow multiple possibilities: for example, the `atom` rule in the above grammar can match either
-an integer or a parenthesized expression.
+Some rules might allow multiple possibilities: for example, the `atom` rule in the above grammar can match either an integer or a parenthesized expression.
 The notion of alternative is expressed in the grammar using the `|` operator.
 
 ## Parse results
@@ -94,13 +91,13 @@ By default, parsers generated with `pegomant` will produce AST nodes that are ei
 ### Customizing the AST
 
 The default AST can be enough, but in some cases it is useful to transform it into a custom data structure.
-Pegomancy grammars can specify a class whose methods will be invoked when a rule matches some input.
+When using a Pegomancy parser, you can specify an object whose methods will be invoked when a rule matches some input.
 
-That class can be specified using the `@rule_handler <ClassName>` directive.
+That object must be given as the `rule_handler` parameter when initializing the parser.
 
 Here is a possible rule handler for the example grammar given in previous sections.
 
-```
+```python
 class RuleHandler:
     def integer(self, node):
         return int(node)
@@ -128,3 +125,5 @@ class RuleHandler:
             return node[1]
         return node
 ```
+
+> The methods can return `None` to indicate a parse failure for the rule being handled.

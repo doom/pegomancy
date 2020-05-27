@@ -22,7 +22,9 @@ class ParserGenerator:
                 print(f"                and ({item.name} := {cond}) is not None")
         print(f"        ):")
         kwargs_items = [f"'{name}': {name}" for name in items]
-        print(f"            return self._wrap_node({rule.name!r}, {{{', '.join(kwargs_items)}}})")
+        print(f"            node = self._wrap_node({rule.name!r}, {{{', '.join(kwargs_items)}}})")
+        print(f"            if node is not None:")
+        print(f"                return node")
 
     def _generate_unnamed_alternative(self, alt: Alternative, rule: Rule):
         items = []
@@ -36,7 +38,9 @@ class ParserGenerator:
                 items.append(var_name)
                 print(f"                and ({var_name} := {cond}) is not None")
         print(f"        ):")
-        print(f"            return self._wrap_node({rule.name!r}, [{', '.join(items)}])")
+        print(f"            node = self._wrap_node({rule.name!r}, [{', '.join(items)}])")
+        print(f"            if node is not None:")
+        print(f"                return node")
 
     def _generate_alternative(self, alt: Alternative, rule: Rule):
         print(f"        if (True")

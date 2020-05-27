@@ -54,7 +54,7 @@ class GrammarParser(RawTextParser):
                 and self.expect_string('%{') is not None
                 and (block := self.expect_regex(r'^(.*?)(?=%})')) is not None
                 and self.expect_string('%}') is not None
-                and self.expect_string('\n') is not None
+                and self._repeat(1, lambda *args: self.expect_string('\n')) is not None
         ):
             return self._wrap_node('verbatim_block', {'block': block})
         self.rewind(pos)
@@ -67,7 +67,7 @@ class GrammarParser(RawTextParser):
                 and self.expect_string('@set') is not None
                 and self.expect_regex(r'[ \t]+') is not None
                 and (setting := self.expect_regex(r'[a-zA-Z_][a-zA-Z0-9_]*')) is not None
-                and self.expect_string('\n') is not None
+                and self._repeat(1, lambda *args: self.expect_string('\n')) is not None
         ):
             return self._wrap_node('setting', {'setting': setting})
         self.rewind(pos)
@@ -276,7 +276,7 @@ class GrammarParser(RawTextParser):
                 and (name := self.rule_name()) is not None
                 and self.expect_string(':') is not None
                 and (alts := self.alternatives()) is not None
-                and self.expect_string('\n') is not None
+                and self._repeat(1, lambda *args: self.expect_string('\n')) is not None
         ):
             return self._wrap_node('rule', {'name': name, 'alts': alts})
         self.rewind(pos)

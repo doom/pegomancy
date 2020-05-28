@@ -2,6 +2,10 @@
 
 Yet another parsing thingy
 
+## Installation
+
+This project is written using Python 3.8. It can be installed using setuptools or pip.
+
 ## Usage
 
 ### As a tool

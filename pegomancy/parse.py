@@ -41,26 +41,8 @@ class BaseParser:
     def eof(self) -> bool:
         return self.reader.eof()
 
-    def peek(self):
-        return self.reader.peek()
-
-    def get(self):
-        return self.reader.get()
-
 
 class RawTextParser(BaseParser):
-    def read_while(self, predicate: Callable[[str], bool]) -> str:
-        """
-        Read data character by character while a predicate validates it
-
-        :param predicate:           the predicate validating data
-        :return:                    the data read
-        """
-        result = ""
-        while not self.eof() and predicate(self.peek()):
-            result += self.get()
-        return result
-
     def expect_string(self, expected: str) -> Optional[str]:
         """
         Expect an exact string

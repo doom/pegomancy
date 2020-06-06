@@ -42,27 +42,6 @@ class BaseParser:
         return self.reader.eof()
 
 
-class RawTextParser(BaseParser):
-    def expect_string(self, expected: str) -> Optional[str]:
-        """
-        Expect an exact string
-
-        :param expected:            the expected string
-        :return:                    the matched string if any, otherwise None
-        """
-        self.reader.consume_non_significant()
-        return self.reader.expect_string(expected)
-
-    def expect_regex(self, regex: str) -> Optional[str]:
-        """
-        Expect a string matching a regular expression
-
-        :param regex:               the regular expression to match
-        :return:                    the matched string if any, otherwise None
-        """
-        return self.reader.expect_regex(regex)
-
-
 def parsing_rule(f):
     """
     Wrap a parsing function to memoize its calls
@@ -137,3 +116,25 @@ def left_recursive_parsing_rule(f):
         return result
 
     return wrapped_func
+
+
+class RawTextParser(BaseParser):
+    @parsing_rule
+    def expect_string(self, expected: str) -> Optional[str]:
+        """
+        Expect an exact string
+
+        :param expected:            the expected string
+        :return:                    the matched string if any, otherwise None
+        """
+        return self.reader.expect_string(expected)
+
+    @parsing_rule
+    def expect_regex(self, regex: str) -> Optional[str]:
+        """
+        Expect a string matching a regular expression
+
+        :param regex:               the regular expression to match
+        :return:                    the matched string if any, otherwise None
+        """
+        return self.reader.expect_regex(regex)

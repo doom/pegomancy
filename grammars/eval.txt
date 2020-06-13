@@ -29,12 +29,12 @@
 
 integer: r"[0-9]+"
 
-expr: left:expr op:'+' right:term
-    | left:expr op:'-' right:term
+expr: left:expr op:'+' ~ right:term
+    | left:expr op:'-' ~ right:term
     | term
 
-term: left:term op:'*' right:atom
-    | left:term op:'/' right:atom
+term: left:term op:'*' ~ right:atom
+    | left:term op:'/' ~ right:atom
     | atom
 
-atom: integer | '(' expr ')'
+atom: integer | '(' ~ expr ')'

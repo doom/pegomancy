@@ -10,7 +10,9 @@ literal: '"' r'[^"]*' '"' | "'" r"[^']*" "'"
 
 regex: 'r' literal
 
-atom: regex | literal | rule_name:rule_name | '(' parenthesized_alts:alternatives ')'
+cut: '~'
+
+atom: regex | literal | rule_name:rule_name | '(' parenthesized_alts:alternatives ')' | cut
 
 maybe: atom:atom '?'
 

@@ -1,4 +1,4 @@
-from .grammar import AbstractItem, Alternative, Grammar, Rule, RuleItem
+from .grammar import AbstractItem, Alternative, Grammar, Rule, RuleItem, Cut
 
 
 class ParserGenerator:
@@ -15,7 +15,7 @@ class ParserGenerator:
         for item in alt.items:
             assert isinstance(item, AbstractItem)
             cond = item.generate_condition()
-            if not item.is_named():
+            if not item.is_named() or isinstance(item, Cut):
                 print(f"            {cond}")
             else:
                 items.append(item.name)
@@ -29,7 +29,7 @@ class ParserGenerator:
         for item in alt.items:
             assert isinstance(item, AbstractItem)
             cond = item.generate_condition()
-            if isinstance(item, RuleItem) and item.target.startswith("_"):
+            if isinstance(item, Cut) or (isinstance(item, RuleItem) and item.target.startswith("_")):
                 print(f"            {cond}")
             else:
                 var_name = f"v{len(items)}"
@@ -39,6 +39,7 @@ class ParserGenerator:
         print(f"            return node")
 
     def _generate_alternative(self, alt: Alternative, rule: Rule):
+        print(f"        cut = False")
         print(f"        try:")
         any_named = any(map(lambda i: i.is_named(), alt.items))
         if any_named:
@@ -47,6 +48,8 @@ class ParserGenerator:
             self._generate_unnamed_alternative(alt, rule)
         print(f"        except ParseError as e:")
         print(f"            self.rewind(pos)")
+        print(f"            if cut is True:")
+        print(f"                raise CutError(e.message, e.location)")
         print()
 
     def _generate_rule(self, rule: Rule):
@@ -105,7 +108,7 @@ class ParserGenerator:
 
     def generate_parser(self, grammar: Grammar, class_name: str = None):
         class_name = class_name or "Parser"
-        print(f"from pegomancy.parse import ParseError, RawTextParser, parsing_rule, left_recursive_parsing_rule")
+        print(f"from pegomancy.parse import CutError, ParseError, RawTextParser, parsing_rule, left_recursive_parsing_rule")
         for verbatim in grammar.prelude:
             print(verbatim)
         print("\n")

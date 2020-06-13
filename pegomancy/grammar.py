@@ -23,6 +23,9 @@ class GrammarParserRuleHandler:
     def regex(self, node):
         return RegexItem(node[1].target)
 
+    def cut(self, _):
+        return Cut()
+
     def lookahead(self, node):
         return Lookahead(node["item"])
 
@@ -156,6 +159,17 @@ class NegativeLookahead(AbstractItem):
     @staticmethod
     def is_nested() -> bool:
         return True
+
+
+class Cut(AbstractItem):
+    def __init__(self):
+        super().__init__(None)
+
+    def generate_condition(self) -> str:
+        return f"cut = True"
+
+    def is_named(self) -> bool:
+        return False
 
 
 class Alternative:

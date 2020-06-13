@@ -15,6 +15,18 @@ class ParseError(Exception):
         return f"parse error: {self.message} (at offset {self.location})"
 
 
+class CutError(Exception):
+    def __init__(self, message: str, location: int = None):
+        self.message = message
+        self.location = location
+
+    def __repr__(self):
+        return f"CutError(message={self.message!r}, location={self.location!r})"
+
+    def __str__(self):
+        return f"parse error: {self.message} (at offset {self.location})"
+
+
 class BaseParser:
     """
     Base class for all parsers

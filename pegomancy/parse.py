@@ -3,6 +3,18 @@ from typing import Callable, Dict, List, Optional
 from .reader import Reader
 
 
+class ParseError(Exception):
+    def __init__(self, message: str, location: int = None):
+        self.message = message
+        self.location = location
+
+    def __repr__(self):
+        return f"ParseError(message={self.message!r}, location={self.location!r})"
+
+    def __str__(self):
+        return f"parse error: {self.message} (at offset {self.location})"
+
+
 class BaseParser:
     """
     Base class for all parsers
@@ -42,6 +54,22 @@ class BaseParser:
         return self.reader.eof()
 
 
+def _handle_result(result):
+    success, value = result
+    if success:
+        return value
+    else:
+        raise value
+
+
+def _call_rule(f, self, *args):
+    try:
+        result = f(self, *args)
+        return True, result
+    except ParseError as e:
+        return False, e
+
+
 def parsing_rule(f):
     """
     Wrap a parsing function to memoize its calls
@@ -61,10 +89,10 @@ def parsing_rule(f):
             result, end_position = position_cache[invocation_key]
             self.rewind(end_position)
         else:
-            result = f(self, *args)
+            result = _call_rule(f, self, *args)
             end_position = self.mark()
             position_cache[invocation_key] = result, end_position
-        return result
+        return _handle_result(result)
 
     return wrapped_func
 
@@ -101,11 +129,11 @@ def left_recursive_parsing_rule(f):
             result, end_position = position_cache[invocation_key]
             self.rewind(end_position)
         else:
-            position_cache[invocation_key] = None, pos
-            last_result, last_pos = None, pos
+            failing_seed = ParseError(message=f"cannot parse a '{f.__name__}'", location=pos)
+            position_cache[invocation_key] = last_result, last_pos = (False, failing_seed), pos
             while True:
                 self.rewind(pos)
-                result = f(self, *args)
+                result = _call_rule(f, self, *args)
                 end_position = self.mark()
                 if end_position <= last_pos:
                     break
@@ -113,28 +141,34 @@ def left_recursive_parsing_rule(f):
                 last_result, last_pos = result, end_position
             result = last_result
             self.rewind(last_pos)
-        return result
+        return _handle_result(result)
 
     return wrapped_func
 
 
 class RawTextParser(BaseParser):
     @parsing_rule
-    def expect_string(self, expected: str) -> Optional[str]:
+    def expect_string(self, expected: str) -> str:
         """
         Expect an exact string
 
         :param expected:            the expected string
         :return:                    the matched string if any, otherwise None
         """
-        return self.reader.expect_string(expected)
+        s = self.reader.expect_string(expected)
+        if s is None:
+            raise ParseError(message=f"expected '{expected}'", location=self.mark())
+        return s
 
     @parsing_rule
-    def expect_regex(self, regex: str) -> Optional[str]:
+    def expect_regex(self, regex: str) -> str:
         """
         Expect a string matching a regular expression
 
         :param regex:               the regular expression to match
         :return:                    the matched string if any, otherwise None
         """
-        return self.reader.expect_regex(regex)
+        s = self.reader.expect_regex(regex)
+        if s is None:
+            raise ParseError(message=f"expected text matching the '{regex}' pattern", location=self.mark())
+        return s

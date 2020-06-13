@@ -48,7 +48,7 @@ class GrammarParserRuleHandler:
     def named_item(self, node):
         item = node["item"]
         name = node.get("name")
-        if name is not True:
+        if name is not None:
             item.name = name["name"]
         return item
 
@@ -115,7 +115,7 @@ class RuleItem(AbstractItem):
 
 class Maybe(AbstractItem):
     def generate_condition(self) -> str:
-        return f"({self.target.generate_condition()} or True)"
+        return f"self._maybe(lambda *args: {self.target.generate_condition()})"
 
     @staticmethod
     def is_nested() -> bool:
@@ -151,7 +151,7 @@ class Lookahead(AbstractItem):
 
 class NegativeLookahead(AbstractItem):
     def generate_condition(self) -> str:
-        return f"not self._lookahead(lambda *args: {self.target.generate_condition()})"
+        return f"self._not_lookahead(lambda *args: {self.target.generate_condition()})"
 
     @staticmethod
     def is_nested() -> bool:

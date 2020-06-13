@@ -16,15 +16,13 @@ class ParserGenerator:
             assert isinstance(item, AbstractItem)
             cond = item.generate_condition()
             if not item.is_named():
-                print(f"                and {cond} is not None")
+                print(f"            {cond}")
             else:
                 items.append(item.name)
-                print(f"                and ({item.name} := {cond}) is not None")
-        print(f"        ):")
+                print(f"            {item.name} = {cond}")
         kwargs_items = [f"'{name}': {name}" for name in items]
         print(f"            node = self._wrap_node({rule.name!r}, {{{', '.join(kwargs_items)}}})")
-        print(f"            if node is not None:")
-        print(f"                return node")
+        print(f"            return node")
 
     def _generate_unnamed_alternative(self, alt: Alternative, rule: Rule):
         items = []
@@ -32,24 +30,24 @@ class ParserGenerator:
             assert isinstance(item, AbstractItem)
             cond = item.generate_condition()
             if isinstance(item, RuleItem) and item.target.startswith("_"):
-                print(f"                and {cond} is not None")
+                print(f"            {cond}")
             else:
                 var_name = f"v{len(items)}"
                 items.append(var_name)
-                print(f"                and ({var_name} := {cond}) is not None")
-        print(f"        ):")
+                print(f"            {var_name} = {cond}")
         print(f"            node = self._wrap_node({rule.name!r}, [{', '.join(items)}])")
-        print(f"            if node is not None:")
-        print(f"                return node")
+        print(f"            return node")
 
     def _generate_alternative(self, alt: Alternative, rule: Rule):
-        print(f"        if (True")
+        print(f"        try:")
         any_named = any(map(lambda i: i.is_named(), alt.items))
         if any_named:
             self._generate_named_alternative(alt, rule)
         else:
             self._generate_unnamed_alternative(alt, rule)
-        print(f"        self.rewind(pos)")
+        print(f"        except ParseError as e:")
+        print(f"            self.rewind(pos)")
+        print()
 
     def _generate_rule(self, rule: Rule):
         if rule.is_left_recursive():
@@ -60,20 +58,24 @@ class ParserGenerator:
         print(f"        pos = self.mark()")
         for alt in rule.alternatives:
             self._generate_alternative(alt, rule)
-
-        print(f"        return None")
+        print(f"        raise ParseError(message=\"cannot parse a '{rule.name}'\", location=self.mark())")
         print()
 
     def _generate_repeat_method(self):
         print("    def _repeat(self, minimum, f, *args):")
         print("        pos = self.mark()")
         print("        matches = []")
-        print("        while (match := f(*args)) is not None:")
-        print("            matches.append(match)")
+        print("        while True:")
+        print("            last = self.mark()")
+        print("            try:")
+        print("                matches.append(f(*args))")
+        print("            except ParseError:")
+        print("                self.rewind(last)")
+        print("                break")
         print("        if len(matches) >= minimum:")
         print("            return matches")
         print("        self.rewind(pos)")
-        print("        return None")
+        print("        raise ParseError(message=f\"expected at least {minimum} repetitions\", location=self.mark())")
         print()
 
     def _generate_lookahead_method(self):
@@ -83,10 +85,27 @@ class ParserGenerator:
         print("        self.rewind(pos)")
         print("        return result")
         print()
+        print("    def _not_lookahead(self, f, *args):")
+        print("        try:")
+        print("            self._lookahead(f, *args)")
+        print("            raise ParseError(message=\"failed lookahead\", location=self.mark())")
+        print("        except ParseError:")
+        print("            pass")
+        print()
+
+    def _generate_maybe_method(self):
+        print("    def _maybe(self, f, *args):")
+        print("        pos = self.mark()")
+        print("        try:")
+        print("            return f(*args)")
+        print("        except ParseError:")
+        print("            self.rewind(pos)")
+        print("            return None")
+        print()
 
     def generate_parser(self, grammar: Grammar, class_name: str = None):
         class_name = class_name or "Parser"
-        print(f"from pegomancy.parse import RawTextParser, parsing_rule, left_recursive_parsing_rule")
+        print(f"from pegomancy.parse import ParseError, RawTextParser, parsing_rule, left_recursive_parsing_rule")
         for verbatim in grammar.prelude:
             print(verbatim)
         print("\n")
@@ -94,6 +113,7 @@ class ParserGenerator:
         self._generate_wrap_node()
         self._generate_repeat_method()
         self._generate_lookahead_method()
+        self._generate_maybe_method()
         rules = grammar.rules
         for rule in rules:
             self._generate_rule(rule)

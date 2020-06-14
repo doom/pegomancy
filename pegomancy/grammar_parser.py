@@ -82,6 +82,7 @@ class GrammarParser(RawTextParser):
         cut = False
         try:
             self.expect_string('@verbatim')
+            cut = True
             self.expect_string('%{')
             block = self.expect_regex(r'^(.*?)(?=%})')
             self.expect_string('%}')
@@ -101,6 +102,7 @@ class GrammarParser(RawTextParser):
         cut = False
         try:
             self.expect_string('@set')
+            cut = True
             self.expect_regex(r'[ \t]+')
             setting = self.expect_regex(r'[a-zA-Z_][a-zA-Z0-9_]*')
             self._repeat(1, lambda *args: self.expect_string('\n'))
@@ -209,6 +211,7 @@ class GrammarParser(RawTextParser):
         cut = False
         try:
             self.expect_string('(')
+            cut = True
             parenthesized_alts = self.alternatives()
             self.expect_string(')')
             node = self._wrap_node('atom', {'parenthesized_alts': parenthesized_alts})
@@ -274,6 +277,7 @@ class GrammarParser(RawTextParser):
         cut = False
         try:
             self.expect_string('&')
+            cut = True
             item = self.item()
             node = self._wrap_node('lookahead', {'item': item})
             return node
@@ -290,6 +294,7 @@ class GrammarParser(RawTextParser):
         cut = False
         try:
             self.expect_string('!')
+            cut = True
             item = self.item()
             node = self._wrap_node('negative_lookahead', {'item': item})
             return node
@@ -454,6 +459,7 @@ class GrammarParser(RawTextParser):
             alts = self.alternatives()
             self.__()
             self.expect_string('|')
+            cut = True
             alt = self.alternative()
             node = self._wrap_node('alternatives', {'alts': alts, 'alt': alt})
             return node
@@ -481,6 +487,7 @@ class GrammarParser(RawTextParser):
         try:
             name = self.rule_name()
             self.expect_string(':')
+            cut = True
             alts = self.alternatives()
             self._repeat(1, lambda *args: self.expect_string('\n'))
             node = self._wrap_node('rule', {'name': name, 'alts': alts})
@@ -500,6 +507,8 @@ class GrammarParser(RawTextParser):
             verbatim = self._repeat(0, lambda *args: self.verbatim_block())
             settings = self._repeat(0, lambda *args: self.setting())
             rules = self._repeat(1, lambda *args: self.rule())
+            cut = True
+            self.expect_eof()
             node = self._wrap_node('grammar', {'verbatim': verbatim, 'settings': settings, 'rules': rules})
             return node
         except ParseError as e:

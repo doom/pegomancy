@@ -1,8 +1,8 @@
 __: r"[ \n\t]+"?
 
-verbatim_block: "@verbatim" "%{" block:r"^(.*?)(?=%})" "%}" "\n"+
+verbatim_block: "@verbatim" ~ "%{" block:r"^(.*?)(?=%})" "%}" "\n"+
 
-setting: "@set" r"[ \t]+" setting:r"[a-zA-Z_][a-zA-Z0-9_]*" "\n"+
+setting: "@set" ~ r"[ \t]+" setting:r"[a-zA-Z_][a-zA-Z0-9_]*" "\n"+
 
 rule_name: r"[a-zA-Z_][a-zA-Z0-9_]*"
 
@@ -10,7 +10,7 @@ literal: '"' r'[^"]*' '"' | "'" r"[^']*" "'"
 
 regex: 'r' literal
 
-atom: regex | literal | rule_name:rule_name | '(' parenthesized_alts:alternatives ')'
+atom: regex | literal | rule_name:rule_name | '(' ~ parenthesized_alts:alternatives ')'
 
 maybe: atom:atom '?'
 
@@ -18,9 +18,9 @@ one_or_more: atom:atom '+'
 
 zero_or_more: atom:atom '*'
 
-lookahead: '&' item:item
+lookahead: '&' ~ item:item
 
-negative_lookahead: '!' item:item
+negative_lookahead: '!' ~ item:item
 
 cut: '~'
 
@@ -32,8 +32,8 @@ named_item: name:(name:r"[a-zA-Z_][a-zA-Z0-9_]*" ':')? item:item
 
 alternative: named_item+
 
-alternatives: alts:alternatives __ '|' alt:alternative | alt:alternative
+alternatives: alts:alternatives __ '|' ~ alt:alternative | alt:alternative
 
-rule: name:rule_name ':' alts:alternatives '\n'+
+rule: name:rule_name ':' ~ alts:alternatives '\n'+
 
-grammar: verbatim:verbatim_block* settings:setting* rules:rule+
+grammar: verbatim:verbatim_block* settings:setting* rules:rule+ ~ EOF

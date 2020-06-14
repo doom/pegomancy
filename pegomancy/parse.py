@@ -188,3 +188,11 @@ class RawTextParser(BaseParser):
         if s is None:
             raise self.make_error(message=f"expected text matching the '{regex}' pattern", pos=self.mark())
         return s
+
+    @parsing_rule
+    def expect_eof(self):
+        """
+        Expect the cursor to have reached the end of the source text
+        """
+        if not self.eof():
+            raise self.make_error(message=f"expected end of input", pos=self.mark())

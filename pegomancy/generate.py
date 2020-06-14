@@ -1,4 +1,4 @@
-from .grammar import AbstractItem, Alternative, Grammar, Rule, RuleItem, Cut
+from .grammar import AbstractItem, Alternative, Grammar, Rule, RuleItem, CutItem, EOFItem
 
 
 class ParserGenerator:
@@ -15,7 +15,7 @@ class ParserGenerator:
         for item in alt.items:
             assert isinstance(item, AbstractItem)
             cond = item.generate_condition()
-            if not item.is_named() or isinstance(item, Cut):
+            if not item.is_named() or isinstance(item, (CutItem, EOFItem)):
                 print(f"            {cond}")
             else:
                 items.append(item.name)
@@ -29,7 +29,7 @@ class ParserGenerator:
         for item in alt.items:
             assert isinstance(item, AbstractItem)
             cond = item.generate_condition()
-            if isinstance(item, Cut) or (isinstance(item, RuleItem) and item.target.startswith("_")):
+            if isinstance(item, (CutItem, EOFItem)) or (isinstance(item, RuleItem) and item.target.startswith("_")):
                 print(f"            {cond}")
             else:
                 var_name = f"v{len(items)}"

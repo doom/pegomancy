@@ -10,9 +10,7 @@ literal: '"' r'[^"]*' '"' | "'" r"[^']*" "'"
 
 regex: 'r' literal
 
-cut: '~'
-
-atom: regex | literal | rule_name:rule_name | '(' parenthesized_alts:alternatives ')' | cut
+atom: regex | literal | rule_name:rule_name | '(' parenthesized_alts:alternatives ')'
 
 maybe: atom:atom '?'
 
@@ -24,7 +22,11 @@ lookahead: '&' item:item
 
 negative_lookahead: '!' item:item
 
-item: maybe | one_or_more | zero_or_more | lookahead | negative_lookahead | atom
+cut: '~'
+
+eof_: 'EOF'
+
+item: cut | eof_ | maybe | one_or_more | zero_or_more | lookahead | negative_lookahead | atom
 
 named_item: name:(name:r"[a-zA-Z_][a-zA-Z0-9_]*" ':')? item:item
 

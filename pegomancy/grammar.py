@@ -24,7 +24,10 @@ class GrammarParserRuleHandler:
         return RegexItem(node[1].target)
 
     def cut(self, _):
-        return Cut()
+        return CutItem()
+
+    def eof_(self, _):
+        return EOFItem()
 
     def lookahead(self, node):
         return Lookahead(node["item"])
@@ -161,12 +164,23 @@ class NegativeLookahead(AbstractItem):
         return True
 
 
-class Cut(AbstractItem):
+class CutItem(AbstractItem):
     def __init__(self):
         super().__init__(None)
 
     def generate_condition(self) -> str:
         return f"cut = True"
+
+    def is_named(self) -> bool:
+        return False
+
+
+class EOFItem(AbstractItem):
+    def __init__(self):
+        super().__init__(None)
+
+    def generate_condition(self) -> str:
+        return f"self.expect_eof()"
 
     def is_named(self) -> bool:
         return False

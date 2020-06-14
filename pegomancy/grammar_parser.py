@@ -174,21 +174,6 @@ class GrammarParser(RawTextParser):
         raise self.make_error(message=f"expected a regex", pos=self.mark())
 
     @parsing_rule
-    def cut(self):
-        pos = self.mark()
-        cut = False
-        try:
-            v0 = self.expect_string('~')
-            node = self._wrap_node('cut', [v0])
-            return node
-        except ParseError as e:
-            self.rewind(pos)
-            if cut is True:
-                raise CutError(e.message, e.location)
-
-        raise self.make_error(message=f"expected a cut", pos=self.mark())
-
-    @parsing_rule
     def atom(self):
         pos = self.mark()
         cut = False
@@ -227,16 +212,6 @@ class GrammarParser(RawTextParser):
             parenthesized_alts = self.alternatives()
             self.expect_string(')')
             node = self._wrap_node('atom', {'parenthesized_alts': parenthesized_alts})
-            return node
-        except ParseError as e:
-            self.rewind(pos)
-            if cut is True:
-                raise CutError(e.message, e.location)
-
-        cut = False
-        try:
-            v0 = self.cut()
-            node = self._wrap_node('atom', [v0])
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -326,8 +301,58 @@ class GrammarParser(RawTextParser):
         raise self.make_error(message=f"expected a negative_lookahead", pos=self.mark())
 
     @parsing_rule
+    def cut(self):
+        pos = self.mark()
+        cut = False
+        try:
+            v0 = self.expect_string('~')
+            node = self._wrap_node('cut', [v0])
+            return node
+        except ParseError as e:
+            self.rewind(pos)
+            if cut is True:
+                raise CutError(e.message, e.location)
+
+        raise self.make_error(message=f"expected a cut", pos=self.mark())
+
+    @parsing_rule
+    def eof_(self):
+        pos = self.mark()
+        cut = False
+        try:
+            v0 = self.expect_string('EOF')
+            node = self._wrap_node('eof_', [v0])
+            return node
+        except ParseError as e:
+            self.rewind(pos)
+            if cut is True:
+                raise CutError(e.message, e.location)
+
+        raise self.make_error(message=f"expected a eof_", pos=self.mark())
+
+    @parsing_rule
     def item(self):
         pos = self.mark()
+        cut = False
+        try:
+            v0 = self.cut()
+            node = self._wrap_node('item', [v0])
+            return node
+        except ParseError as e:
+            self.rewind(pos)
+            if cut is True:
+                raise CutError(e.message, e.location)
+
+        cut = False
+        try:
+            v0 = self.eof_()
+            node = self._wrap_node('item', [v0])
+            return node
+        except ParseError as e:
+            self.rewind(pos)
+            if cut is True:
+                raise CutError(e.message, e.location)
+
         cut = False
         try:
             v0 = self.maybe()

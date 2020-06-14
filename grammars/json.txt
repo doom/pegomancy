@@ -44,14 +44,14 @@ string: '"' r'[^"]*' '"'
 
 float: r"[0-9]+\.[0-9]+"
 
-field: key:string ':' value:value
-repeated_field: ',' field:field
+field: key:string ':' ~ value:value
+repeated_field: ',' ~ field:field
 object_fields: field repeated_field*
-object: '{' fields:object_fields? '}'
+object: '{' ~ fields:object_fields? '}'
 
-repeated_value: ',' value:value
+repeated_value: ',' ~ value:value
 list_values: value repeated_value*
-list: '[' values:list_values? ']'
+list: '[' ~ values:list_values? ']'
 
 value: null
      | boolean
@@ -60,3 +60,5 @@ value: null
      | string
      | list
      | object
+
+json: value ~ EOF

@@ -22,7 +22,7 @@ class GrammarParser(RawTextParser):
         if len(matches) >= minimum:
             return matches
         self.rewind(pos)
-        raise ParseError(message=f"expected at least {minimum} repetitions", location=self.mark())
+        raise self.make_error(message=f"expected at least {minimum} repetitions of a {f.__name__}", pos=self.mark())
 
     def _lookahead(self, f, *args):
         pos = self.mark()
@@ -33,7 +33,7 @@ class GrammarParser(RawTextParser):
     def _not_lookahead(self, f, *args):
         try:
             self._lookahead(f, *args)
-            raise ParseError(message="failed lookahead", location=self.mark())
+            raise self.make_error(message=f"unexpected {f.__name__}", pos=self.mark())
         except ParseError:
             pass
 
@@ -59,7 +59,7 @@ class GrammarParser(RawTextParser):
             if cut is True:
                 raise CutError(e.message, e.location)
 
-        raise ParseError(message="cannot parse a 'synthesized_rule_0'", location=self.mark())
+        raise self.make_error(message=f"expected a synthesized_rule_0", pos=self.mark())
 
     @parsing_rule
     def __(self):
@@ -74,7 +74,7 @@ class GrammarParser(RawTextParser):
             if cut is True:
                 raise CutError(e.message, e.location)
 
-        raise ParseError(message="cannot parse a '__'", location=self.mark())
+        raise self.make_error(message=f"expected a __", pos=self.mark())
 
     @parsing_rule
     def verbatim_block(self):
@@ -93,7 +93,7 @@ class GrammarParser(RawTextParser):
             if cut is True:
                 raise CutError(e.message, e.location)
 
-        raise ParseError(message="cannot parse a 'verbatim_block'", location=self.mark())
+        raise self.make_error(message=f"expected a verbatim_block", pos=self.mark())
 
     @parsing_rule
     def setting(self):
@@ -111,7 +111,7 @@ class GrammarParser(RawTextParser):
             if cut is True:
                 raise CutError(e.message, e.location)
 
-        raise ParseError(message="cannot parse a 'setting'", location=self.mark())
+        raise self.make_error(message=f"expected a setting", pos=self.mark())
 
     @parsing_rule
     def rule_name(self):
@@ -126,7 +126,7 @@ class GrammarParser(RawTextParser):
             if cut is True:
                 raise CutError(e.message, e.location)
 
-        raise ParseError(message="cannot parse a 'rule_name'", location=self.mark())
+        raise self.make_error(message=f"expected a rule_name", pos=self.mark())
 
     @parsing_rule
     def literal(self):
@@ -155,7 +155,7 @@ class GrammarParser(RawTextParser):
             if cut is True:
                 raise CutError(e.message, e.location)
 
-        raise ParseError(message="cannot parse a 'literal'", location=self.mark())
+        raise self.make_error(message=f"expected a literal", pos=self.mark())
 
     @parsing_rule
     def regex(self):
@@ -171,7 +171,7 @@ class GrammarParser(RawTextParser):
             if cut is True:
                 raise CutError(e.message, e.location)
 
-        raise ParseError(message="cannot parse a 'regex'", location=self.mark())
+        raise self.make_error(message=f"expected a regex", pos=self.mark())
 
     @parsing_rule
     def cut(self):
@@ -186,7 +186,7 @@ class GrammarParser(RawTextParser):
             if cut is True:
                 raise CutError(e.message, e.location)
 
-        raise ParseError(message="cannot parse a 'cut'", location=self.mark())
+        raise self.make_error(message=f"expected a cut", pos=self.mark())
 
     @parsing_rule
     def atom(self):
@@ -243,7 +243,7 @@ class GrammarParser(RawTextParser):
             if cut is True:
                 raise CutError(e.message, e.location)
 
-        raise ParseError(message="cannot parse a 'atom'", location=self.mark())
+        raise self.make_error(message=f"expected a atom", pos=self.mark())
 
     @parsing_rule
     def maybe(self):
@@ -259,7 +259,7 @@ class GrammarParser(RawTextParser):
             if cut is True:
                 raise CutError(e.message, e.location)
 
-        raise ParseError(message="cannot parse a 'maybe'", location=self.mark())
+        raise self.make_error(message=f"expected a maybe", pos=self.mark())
 
     @parsing_rule
     def one_or_more(self):
@@ -275,7 +275,7 @@ class GrammarParser(RawTextParser):
             if cut is True:
                 raise CutError(e.message, e.location)
 
-        raise ParseError(message="cannot parse a 'one_or_more'", location=self.mark())
+        raise self.make_error(message=f"expected a one_or_more", pos=self.mark())
 
     @parsing_rule
     def zero_or_more(self):
@@ -291,7 +291,7 @@ class GrammarParser(RawTextParser):
             if cut is True:
                 raise CutError(e.message, e.location)
 
-        raise ParseError(message="cannot parse a 'zero_or_more'", location=self.mark())
+        raise self.make_error(message=f"expected a zero_or_more", pos=self.mark())
 
     @parsing_rule
     def lookahead(self):
@@ -307,7 +307,7 @@ class GrammarParser(RawTextParser):
             if cut is True:
                 raise CutError(e.message, e.location)
 
-        raise ParseError(message="cannot parse a 'lookahead'", location=self.mark())
+        raise self.make_error(message=f"expected a lookahead", pos=self.mark())
 
     @parsing_rule
     def negative_lookahead(self):
@@ -323,7 +323,7 @@ class GrammarParser(RawTextParser):
             if cut is True:
                 raise CutError(e.message, e.location)
 
-        raise ParseError(message="cannot parse a 'negative_lookahead'", location=self.mark())
+        raise self.make_error(message=f"expected a negative_lookahead", pos=self.mark())
 
     @parsing_rule
     def item(self):
@@ -388,7 +388,7 @@ class GrammarParser(RawTextParser):
             if cut is True:
                 raise CutError(e.message, e.location)
 
-        raise ParseError(message="cannot parse a 'item'", location=self.mark())
+        raise self.make_error(message=f"expected a item", pos=self.mark())
 
     @parsing_rule
     def named_item(self):
@@ -404,7 +404,7 @@ class GrammarParser(RawTextParser):
             if cut is True:
                 raise CutError(e.message, e.location)
 
-        raise ParseError(message="cannot parse a 'named_item'", location=self.mark())
+        raise self.make_error(message=f"expected a named_item", pos=self.mark())
 
     @parsing_rule
     def alternative(self):
@@ -419,7 +419,7 @@ class GrammarParser(RawTextParser):
             if cut is True:
                 raise CutError(e.message, e.location)
 
-        raise ParseError(message="cannot parse a 'alternative'", location=self.mark())
+        raise self.make_error(message=f"expected a alternative", pos=self.mark())
 
     @left_recursive_parsing_rule
     def alternatives(self):
@@ -447,7 +447,7 @@ class GrammarParser(RawTextParser):
             if cut is True:
                 raise CutError(e.message, e.location)
 
-        raise ParseError(message="cannot parse a 'alternatives'", location=self.mark())
+        raise self.make_error(message=f"expected a alternatives", pos=self.mark())
 
     @parsing_rule
     def rule(self):
@@ -465,7 +465,7 @@ class GrammarParser(RawTextParser):
             if cut is True:
                 raise CutError(e.message, e.location)
 
-        raise ParseError(message="cannot parse a 'rule'", location=self.mark())
+        raise self.make_error(message=f"expected a rule", pos=self.mark())
 
     @parsing_rule
     def grammar(self):
@@ -482,4 +482,4 @@ class GrammarParser(RawTextParser):
             if cut is True:
                 raise CutError(e.message, e.location)
 
-        raise ParseError(message="cannot parse a 'grammar'", location=self.mark())
+        raise self.make_error(message=f"expected a grammar", pos=self.mark())

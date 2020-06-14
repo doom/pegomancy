@@ -1,10 +1,11 @@
 from typing import Callable, Dict, List, Optional
 
 from .reader import Reader
+from .source_info import SourceLocation
 
 
 class ParseError(Exception):
-    def __init__(self, message: str, location: int = None):
+    def __init__(self, message: str, location: SourceLocation):
         self.message = message
         self.location = location
 
@@ -12,11 +13,11 @@ class ParseError(Exception):
         return f"ParseError(message={self.message!r}, location={self.location!r})"
 
     def __str__(self):
-        return f"parse error: {self.message} (at offset {self.location})"
+        return f"parse error: {self.message} (at {self.location})"
 
 
 class CutError(Exception):
-    def __init__(self, message: str, location: int = None):
+    def __init__(self, message: str, location: SourceLocation):
         self.message = message
         self.location = location
 
@@ -24,7 +25,7 @@ class CutError(Exception):
         return f"CutError(message={self.message!r}, location={self.location!r})"
 
     def __str__(self):
-        return f"parse error: {self.message} (at offset {self.location})"
+        return f"parse error: {self.message} (at {self.location})"
 
 
 class BaseParser:
@@ -45,6 +46,9 @@ class BaseParser:
         self.cache = {}
         self.reader = Reader(text, whitespace_regex=whitespace_regex, comments_regex=comments_regex)
         self.rule_handler = rule_handler
+
+    def make_error(self, *, message: str, pos: int):
+        return ParseError(message=message, location=self.reader.source_index.location_from_offset(pos))
 
     def mark(self) -> int:
         """
@@ -141,7 +145,7 @@ def left_recursive_parsing_rule(f):
             result, end_position = position_cache[invocation_key]
             self.rewind(end_position)
         else:
-            failing_seed = ParseError(message=f"cannot parse a '{f.__name__}'", location=pos)
+            failing_seed = self.make_error(message=f"expected a {f.__name__}", pos=pos)
             position_cache[invocation_key] = last_result, last_pos = (False, failing_seed), pos
             while True:
                 self.rewind(pos)
@@ -169,7 +173,7 @@ class RawTextParser(BaseParser):
         """
         s = self.reader.expect_string(expected)
         if s is None:
-            raise ParseError(message=f"expected '{expected}'", location=self.mark())
+            raise self.make_error(message=f"expected '{expected}'", pos=self.mark())
         return s
 
     @parsing_rule
@@ -182,5 +186,5 @@ class RawTextParser(BaseParser):
         """
         s = self.reader.expect_regex(regex)
         if s is None:
-            raise ParseError(message=f"expected text matching the '{regex}' pattern", location=self.mark())
+            raise self.make_error(message=f"expected text matching the '{regex}' pattern", pos=self.mark())
         return s

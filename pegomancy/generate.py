@@ -61,7 +61,7 @@ class ParserGenerator:
         print(f"        pos = self.mark()")
         for alt in rule.alternatives:
             self._generate_alternative(alt, rule)
-        print(f"        raise ParseError(message=\"cannot parse a '{rule.name}'\", location=self.mark())")
+        print(f"        raise self.make_error(message=f\"expected a {rule.name}\", pos=self.mark())")
         print()
 
     def _generate_repeat_method(self):
@@ -78,7 +78,7 @@ class ParserGenerator:
         print("        if len(matches) >= minimum:")
         print("            return matches")
         print("        self.rewind(pos)")
-        print("        raise ParseError(message=f\"expected at least {minimum} repetitions\", location=self.mark())")
+        print("        raise self.make_error(message=f\"expected at least {minimum} repetitions of a {f.__name__}\", pos=self.mark())")
         print()
 
     def _generate_lookahead_method(self):
@@ -91,7 +91,7 @@ class ParserGenerator:
         print("    def _not_lookahead(self, f, *args):")
         print("        try:")
         print("            self._lookahead(f, *args)")
-        print("            raise ParseError(message=\"failed lookahead\", location=self.mark())")
+        print("            raise self.make_error(message=f\"unexpected {f.__name__}\", pos=self.mark())")
         print("        except ParseError:")
         print("            pass")
         print()

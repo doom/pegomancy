@@ -1,6 +1,8 @@
 import re
 from typing import Optional
 
+from .source_info import SourceIndex
+
 
 class Reader:
     """
@@ -23,6 +25,7 @@ class Reader:
         self.comments_regex = comments_regex
         self.text = text
         self.cursor = 0
+        self.source_index = SourceIndex(self.text, build_lazily=True)
 
     def debug(self, lookahead: int = 10):
         """

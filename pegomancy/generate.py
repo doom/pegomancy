@@ -91,9 +91,10 @@ class ParserGenerator:
         print("    def _not_lookahead(self, f, *args):")
         print("        try:")
         print("            self._lookahead(f, *args)")
-        print("            raise self.make_error(message=f\"unexpected {f.__name__}\", pos=self.mark())")
         print("        except ParseError:")
         print("            pass")
+        print("        else:")
+        print("            raise self.make_error(message=f\"unexpected {f.__name__}\", pos=self.mark())")
         print()
 
     def _generate_maybe_method(self):

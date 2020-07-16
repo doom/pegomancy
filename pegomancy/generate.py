@@ -1,51 +1,27 @@
-from .grammar import AbstractItem, Alternative, Grammar, Rule, RuleItem, CutItem, EOFItem
+from textwrap import dedent
+
+from .grammar import AbstractItem, Alternative, Grammar, Rule
 
 
 class ParserGenerator:
-    def _generate_wrap_node(self):
-        print("    def _wrap_node(self, rule_name, values):")
-        print("        if isinstance(values, list) and len(values) == 1:")
-        print("            values = values[0]")
-        print("        if self.rule_handler is not None and hasattr(self.rule_handler, rule_name):")
-        print("            values = getattr(self.rule_handler, rule_name)(values)")
-        print("        return values")
 
-    def _generate_named_alternative(self, alt: Alternative, rule: Rule):
-        items = []
+    def _generate_alternative_(self, alt: Alternative, rule: Rule):
+        var_names = []
+        attributes = []
         for item in alt.items:
-            assert isinstance(item, AbstractItem)
+            assert isinstance(item, AbstractItem), "expected alternative item to be an AbstractItem"
             cond = item.generate_condition()
-            if not item.is_named() or isinstance(item, (CutItem, EOFItem)):
-                print(f"            {cond}")
-            else:
-                items.append(item.name)
-                print(f"            {item.name} = {cond}")
-        kwargs_items = [f"'{name}': {name}" for name in items]
-        print(f"            node = self._wrap_node({rule.name!r}, {{{', '.join(kwargs_items)}}})")
-        print(f"            return node")
-
-    def _generate_unnamed_alternative(self, alt: Alternative, rule: Rule):
-        items = []
-        for item in alt.items:
-            assert isinstance(item, AbstractItem)
-            cond = item.generate_condition()
-            if isinstance(item, (CutItem, EOFItem)) or (isinstance(item, RuleItem) and item.target.startswith("_")):
-                print(f"            {cond}")
-            else:
-                var_name = f"v{len(items)}"
-                items.append(var_name)
-                print(f"            {var_name} = {cond}")
-        print(f"            node = self._wrap_node({rule.name!r}, [{', '.join(items)}])")
+            var_name = f"v{len(var_names)}"
+            var_names.append(var_name)
+            attributes.append(item.attributes)
+            print(f"            {var_name} = {cond}")
+        print(f"            node = self._wrap_node({rule.name!r}, [{', '.join(var_names)}], {attributes!r})")
         print(f"            return node")
 
     def _generate_alternative(self, alt: Alternative, rule: Rule):
         print(f"        cut = False")
         print(f"        try:")
-        any_named = any(map(lambda i: i.is_named(), alt.items))
-        if any_named:
-            self._generate_named_alternative(alt, rule)
-        else:
-            self._generate_unnamed_alternative(alt, rule)
+        self._generate_alternative_(alt, rule)
         print(f"        except ParseError as e:")
         print(f"            self.rewind(pos)")
         print(f"            if cut is True:")
@@ -109,12 +85,19 @@ class ParserGenerator:
 
     def generate_parser(self, grammar: Grammar, class_name: str = None):
         class_name = class_name or "Parser"
-        print(f"from pegomancy.parse import CutError, ParseError, RawTextParser, parsing_rule, left_recursive_parsing_rule")
+        print(dedent("""\
+        from pegomancy.parse import \\
+            CutError, \\
+            ParseError, \\
+            RawTextParser, \\
+            parsing_rule, \\
+            left_recursive_parsing_rule
+        """))
+        print("from pegomancy.grammar_items import ItemAttributes")
         for verbatim in grammar.prelude:
             print(verbatim)
         print("\n")
         print(f"class {class_name}(RawTextParser):")
-        self._generate_wrap_node()
         self._generate_repeat_method()
         self._generate_lookahead_method()
         self._generate_maybe_method()

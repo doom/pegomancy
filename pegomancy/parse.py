@@ -163,6 +163,21 @@ def left_recursive_parsing_rule(f):
 
 
 class RawTextParser(BaseParser):
+    def _wrap_node(self, rule_name, values, attributes):
+        named = {}
+        values, attributes = [list(t) for t in zip(*filter(lambda va: not va[1].ignore, zip(values, attributes)))]
+        for value, attr in zip(values, attributes):
+            if attr.name is not None:
+                assert attr.name not in named, "two items cannot share the same name in the same alternative"
+                named[attr.name] = value
+        if named:
+            values = named
+        elif len(values) == 1:
+            values = values[0]
+        if self.rule_handler is not None and hasattr(self.rule_handler, rule_name):
+            values = getattr(self.rule_handler, rule_name)(values)
+        return values
+
     @parsing_rule
     def expect_string(self, expected: str) -> str:
         """

@@ -1,8 +1,9 @@
-from abc import abstractmethod, ABCMeta
+from dataclasses import dataclass, field
 from textwrap import dedent
 from typing import List
 
 from .grammar_parser import GrammarParser
+from .grammar_items import ItemAttributes, AbstractItem
 
 
 class GrammarParserRuleHandler:
@@ -55,7 +56,7 @@ class GrammarParserRuleHandler:
         item = node["item"]
         name = node.get("name")
         if name is not None:
-            item.name = name["name"]
+            item.attributes.name = name["name"]
         return item
 
     def alternative(self, node):
@@ -82,147 +83,140 @@ class GrammarParserRuleHandler:
         return Grammar(verbatim, rules, **settings)
 
 
-class AbstractItem(metaclass=ABCMeta):
-    def __init__(self, target, name=None):
-        self.target = target
-        self.name = name
-
-    @abstractmethod
-    def generate_condition(self) -> str:
-        pass
-
-    @staticmethod
-    def is_nested() -> bool:
-        return False
-
-    def is_named(self) -> bool:
-        return self.name is not None
-
-    def __repr__(self):
-        return f"{type(self).__name__}(target={self.target!r}, name={self.name!r})"
-
-
+@dataclass
 class RegexItem(AbstractItem):
+    target: str
+    attributes: ItemAttributes = field(default_factory=ItemAttributes)
+
     def generate_condition(self) -> str:
         v = self.target.replace("'", "\\'")
         return f"self.expect_regex(r'{v}')"
 
 
+@dataclass
 class LiteralItem(AbstractItem):
+    target: str
+    attributes: ItemAttributes = field(default_factory=ItemAttributes)
+
     def generate_condition(self) -> str:
         v = self.target.replace("'", "\\'")
         return f"self.expect_string('{v}')"
 
 
+@dataclass
 class RuleItem(AbstractItem):
+    rule_name: str
+    attributes: ItemAttributes = field(default_factory=ItemAttributes)
+
     def generate_condition(self) -> str:
-        return f"self.{self.target}()"
+        return f"self.{self.rule_name}()"
 
 
+@dataclass
 class Maybe(AbstractItem):
+    inner_item: AbstractItem
+    attributes: ItemAttributes = field(default_factory=ItemAttributes)
+
     def generate_condition(self) -> str:
-        return f"self._maybe(lambda *args: {self.target.generate_condition()})"
+        return f"self._maybe(lambda *args: {self.inner_item.generate_condition()})"
 
     @staticmethod
     def is_nested() -> bool:
         return True
 
 
+@dataclass
 class ZeroOrMore(AbstractItem):
+    inner_item: AbstractItem
+    attributes: ItemAttributes = field(default_factory=ItemAttributes)
+
     def generate_condition(self) -> str:
-        return f"self._repeat(0, lambda *args: {self.target.generate_condition()})"
+        return f"self._repeat(0, lambda *args: {self.inner_item.generate_condition()})"
 
     @staticmethod
     def is_nested() -> bool:
         return True
 
 
+@dataclass
 class OneOrMore(AbstractItem):
+    inner_item: AbstractItem
+    attributes: ItemAttributes = field(default_factory=ItemAttributes)
+
     def generate_condition(self) -> str:
-        return f"self._repeat(1, lambda *args: {self.target.generate_condition()})"
+        return f"self._repeat(1, lambda *args: {self.inner_item.generate_condition()})"
 
     @staticmethod
     def is_nested() -> bool:
         return True
 
 
+@dataclass
 class Lookahead(AbstractItem):
+    inner_item: AbstractItem
+    attributes: ItemAttributes = field(default_factory=ItemAttributes)
+
     def generate_condition(self) -> str:
-        return f"self._lookahead(lambda *args: {self.target.generate_condition()})"
+        return f"self._lookahead(lambda *args: {self.inner_item.generate_condition()})"
 
     @staticmethod
     def is_nested() -> bool:
         return True
 
 
+@dataclass
 class NegativeLookahead(AbstractItem):
+    inner_item: AbstractItem
+    attributes: ItemAttributes = field(default_factory=ItemAttributes)
+
     def generate_condition(self) -> str:
-        return f"self._not_lookahead(lambda *args: {self.target.generate_condition()})"
+        return f"self._not_lookahead(lambda *args: {self.inner_item.generate_condition()})"
 
     @staticmethod
     def is_nested() -> bool:
         return True
 
 
+@dataclass
 class CutItem(AbstractItem):
-    def __init__(self):
-        super().__init__(None)
+    attributes: ItemAttributes = field(default_factory=lambda: ItemAttributes(ignore=True))
 
     def generate_condition(self) -> str:
         return f"cut = True"
 
-    def is_named(self) -> bool:
-        return False
 
-
+@dataclass
 class EOFItem(AbstractItem):
-    def __init__(self):
-        super().__init__(None)
+    attributes: ItemAttributes = field(default_factory=lambda: ItemAttributes(ignore=True))
 
     def generate_condition(self) -> str:
         return f"self.expect_eof()"
 
-    def is_named(self) -> bool:
-        return False
 
-
+@dataclass
 class Alternative:
-    def __init__(self, items: List):
-        self.items = items
-
-    def __repr__(self):
-        return f"Alternative(items={self.items!r})"
+    items: List
 
 
+@dataclass
 class Rule:
-    def __init__(self, name: str, alternatives: List[Alternative]):
-        self.name = name
-        self.alternatives = alternatives
+    name: str
+    alternatives: List[Alternative]
 
     def is_left_recursive(self) -> bool:
         for alt in self.alternatives:
             item = alt.items[0]
             while item.is_nested():
-                item = item.target
-            if isinstance(item, RuleItem) and item.target == self.name:
+                item = item.inner_item
+            if isinstance(item, RuleItem) and item.rule_name == self.name:
                 return True
         return False
 
-    def __repr__(self):
-        return f"Rule(name={self.name!r}, alternatives={self.alternatives!r})"
 
-
+@dataclass
 class Grammar:
-    def __init__(
-            self,
-            verbatim_prelude: List,
-            rules: List[Rule],
-    ):
-        self.prelude = verbatim_prelude
-        self.rules = rules
-
-    def __repr__(self):
-        return f"Grammar(prelude={self.prelude!r}, rules={self.rules!r})"
+    prelude: List
+    rules: List[Rule]
 
     @staticmethod
     def from_specification(text: str) -> 'Grammar':

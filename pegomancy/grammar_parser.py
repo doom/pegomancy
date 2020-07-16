@@ -1,58 +1,26 @@
-from pegomancy.parse import CutError, ParseError, RawTextParser, parsing_rule, left_recursive_parsing_rule
+from pegomancy.parse import \
+    CutError, \
+    ParseError, \
+    RawTextParser, \
+    parsing_rule, \
+    left_recursive_parsing_rule
+
+from pegomancy.grammar_items import ItemAttributes
 
 
 class GrammarParser(RawTextParser):
-    def _wrap_node(self, rule_name, values):
-        if isinstance(values, list) and len(values) == 1:
-            values = values[0]
-        if self.rule_handler is not None and hasattr(self.rule_handler, rule_name):
-            values = getattr(self.rule_handler, rule_name)(values)
-        return values
-
-    def _repeat(self, minimum, f, *args):
-        pos = self.mark()
-        matches = []
-        while True:
-            last = self.mark()
-            try:
-                matches.append(f(*args))
-            except ParseError:
-                self.rewind(last)
-                break
-        if len(matches) >= minimum:
-            return matches
-        self.rewind(pos)
-        raise self.make_error(message=f"expected at least {minimum} repetitions of a {f.__name__}", pos=self.mark())
-
-    def _lookahead(self, f, *args):
-        pos = self.mark()
-        result = f(*args)
-        self.rewind(pos)
-        return result
-
-    def _not_lookahead(self, f, *args):
-        try:
-            self._lookahead(f, *args)
-            raise self.make_error(message=f"unexpected {f.__name__}", pos=self.mark())
-        except ParseError:
-            pass
-
-    def _maybe(self, f, *args):
-        pos = self.mark()
-        try:
-            return f(*args)
-        except ParseError:
-            self.rewind(pos)
-            return None
-
     @parsing_rule
     def synthesized_rule_0(self):
         pos = self.mark()
         cut = False
         try:
-            name = self.expect_regex(r'[a-zA-Z_][a-zA-Z0-9_]*')
-            self.expect_string(':')
-            node = self._wrap_node('synthesized_rule_0', {'name': name})
+            v0 = self.expect_regex(r'[a-zA-Z_][a-zA-Z0-9_]*')
+            v1 = self.expect_string(':')
+            node = self._wrap_node(
+                'synthesized_rule_0',
+                [v0, v1],
+                [ItemAttributes(name='name', ignore=False), ItemAttributes(name=None, ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -67,7 +35,11 @@ class GrammarParser(RawTextParser):
         cut = False
         try:
             v0 = self._maybe(lambda *args: self.expect_regex(r'[ \n\t]+'))
-            node = self._wrap_node('__', [v0])
+            node = self._wrap_node(
+                '__',
+                [v0],
+                [ItemAttributes(name=None, ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -81,13 +53,19 @@ class GrammarParser(RawTextParser):
         pos = self.mark()
         cut = False
         try:
-            self.expect_string('@verbatim')
-            cut = True
-            self.expect_string('%{')
-            block = self.expect_regex(r'^(.*?)(?=%})')
-            self.expect_string('%}')
-            self._repeat(1, lambda *args: self.expect_string('\n'))
-            node = self._wrap_node('verbatim_block', {'block': block})
+            v0 = self.expect_string('@verbatim')
+            v1 = cut = True
+            v2 = self.expect_string('%{')
+            v3 = self.expect_regex(r'^(.*?)(?=%})')
+            v4 = self.expect_string('%}')
+            v5 = self._repeat(1, lambda *args: self.expect_string('\n'))
+            node = self._wrap_node(
+                'verbatim_block',
+                [v0, v1, v2, v3, v4, v5],
+                [ItemAttributes(name=None, ignore=False), ItemAttributes(name=None, ignore=True),
+                 ItemAttributes(name=None, ignore=False), ItemAttributes(name='block', ignore=False),
+                 ItemAttributes(name=None, ignore=False), ItemAttributes(name=None, ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -101,12 +79,18 @@ class GrammarParser(RawTextParser):
         pos = self.mark()
         cut = False
         try:
-            self.expect_string('@set')
-            cut = True
-            self.expect_regex(r'[ \t]+')
-            setting = self.expect_regex(r'[a-zA-Z_][a-zA-Z0-9_]*')
-            self._repeat(1, lambda *args: self.expect_string('\n'))
-            node = self._wrap_node('setting', {'setting': setting})
+            v0 = self.expect_string('@set')
+            v1 = cut = True
+            v2 = self.expect_regex(r'[ \t]+')
+            v3 = self.expect_regex(r'[a-zA-Z_][a-zA-Z0-9_]*')
+            v4 = self._repeat(1, lambda *args: self.expect_string('\n'))
+            node = self._wrap_node(
+                'setting',
+                [v0, v1, v2, v3, v4],
+                [ItemAttributes(name=None, ignore=False), ItemAttributes(name=None, ignore=True),
+                 ItemAttributes(name=None, ignore=False), ItemAttributes(name='setting', ignore=False),
+                 ItemAttributes(name=None, ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -121,7 +105,11 @@ class GrammarParser(RawTextParser):
         cut = False
         try:
             v0 = self.expect_regex(r'[a-zA-Z_][a-zA-Z0-9_]*')
-            node = self._wrap_node('rule_name', [v0])
+            node = self._wrap_node(
+                'rule_name',
+                [v0],
+                [ItemAttributes(name=None, ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -138,7 +126,12 @@ class GrammarParser(RawTextParser):
             v0 = self.expect_string('"')
             v1 = self.expect_regex(r'[^"]*')
             v2 = self.expect_string('"')
-            node = self._wrap_node('literal', [v0, v1, v2])
+            node = self._wrap_node(
+                'literal',
+                [v0, v1, v2],
+                [ItemAttributes(name=None, ignore=False), ItemAttributes(name=None, ignore=False),
+                 ItemAttributes(name=None, ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -150,7 +143,12 @@ class GrammarParser(RawTextParser):
             v0 = self.expect_string('\'')
             v1 = self.expect_regex(r'[^\']*')
             v2 = self.expect_string('\'')
-            node = self._wrap_node('literal', [v0, v1, v2])
+            node = self._wrap_node(
+                'literal',
+                [v0, v1, v2],
+                [ItemAttributes(name=None, ignore=False), ItemAttributes(name=None, ignore=False),
+                 ItemAttributes(name=None, ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -166,7 +164,11 @@ class GrammarParser(RawTextParser):
         try:
             v0 = self.expect_string('r')
             v1 = self.literal()
-            node = self._wrap_node('regex', [v0, v1])
+            node = self._wrap_node(
+                'regex',
+                [v0, v1],
+                [ItemAttributes(name=None, ignore=False), ItemAttributes(name=None, ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -181,7 +183,11 @@ class GrammarParser(RawTextParser):
         cut = False
         try:
             v0 = self.regex()
-            node = self._wrap_node('atom', [v0])
+            node = self._wrap_node(
+                'atom',
+                [v0],
+                [ItemAttributes(name=None, ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -191,7 +197,11 @@ class GrammarParser(RawTextParser):
         cut = False
         try:
             v0 = self.literal()
-            node = self._wrap_node('atom', [v0])
+            node = self._wrap_node(
+                'atom',
+                [v0],
+                [ItemAttributes(name=None, ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -200,8 +210,12 @@ class GrammarParser(RawTextParser):
 
         cut = False
         try:
-            rule_name = self.rule_name()
-            node = self._wrap_node('atom', {'rule_name': rule_name})
+            v0 = self.rule_name()
+            node = self._wrap_node(
+                'atom',
+                [v0],
+                [ItemAttributes(name='rule_name', ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -210,11 +224,16 @@ class GrammarParser(RawTextParser):
 
         cut = False
         try:
-            self.expect_string('(')
-            cut = True
-            parenthesized_alts = self.alternatives()
-            self.expect_string(')')
-            node = self._wrap_node('atom', {'parenthesized_alts': parenthesized_alts})
+            v0 = self.expect_string('(')
+            v1 = cut = True
+            v2 = self.alternatives()
+            v3 = self.expect_string(')')
+            node = self._wrap_node(
+                'atom',
+                [v0, v1, v2, v3],
+                [ItemAttributes(name=None, ignore=False), ItemAttributes(name=None, ignore=True),
+                 ItemAttributes(name='parenthesized_alts', ignore=False), ItemAttributes(name=None, ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -228,9 +247,13 @@ class GrammarParser(RawTextParser):
         pos = self.mark()
         cut = False
         try:
-            atom = self.atom()
-            self.expect_string('?')
-            node = self._wrap_node('maybe', {'atom': atom})
+            v0 = self.atom()
+            v1 = self.expect_string('?')
+            node = self._wrap_node(
+                'maybe',
+                [v0, v1],
+                [ItemAttributes(name='atom', ignore=False), ItemAttributes(name=None, ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -244,9 +267,13 @@ class GrammarParser(RawTextParser):
         pos = self.mark()
         cut = False
         try:
-            atom = self.atom()
-            self.expect_string('+')
-            node = self._wrap_node('one_or_more', {'atom': atom})
+            v0 = self.atom()
+            v1 = self.expect_string('+')
+            node = self._wrap_node(
+                'one_or_more',
+                [v0, v1],
+                [ItemAttributes(name='atom', ignore=False), ItemAttributes(name=None, ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -260,9 +287,13 @@ class GrammarParser(RawTextParser):
         pos = self.mark()
         cut = False
         try:
-            atom = self.atom()
-            self.expect_string('*')
-            node = self._wrap_node('zero_or_more', {'atom': atom})
+            v0 = self.atom()
+            v1 = self.expect_string('*')
+            node = self._wrap_node(
+                'zero_or_more',
+                [v0, v1],
+                [ItemAttributes(name='atom', ignore=False), ItemAttributes(name=None, ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -276,10 +307,15 @@ class GrammarParser(RawTextParser):
         pos = self.mark()
         cut = False
         try:
-            self.expect_string('&')
-            cut = True
-            item = self.item()
-            node = self._wrap_node('lookahead', {'item': item})
+            v0 = self.expect_string('&')
+            v1 = cut = True
+            v2 = self.item()
+            node = self._wrap_node(
+                'lookahead',
+                [v0, v1, v2],
+                [ItemAttributes(name=None, ignore=False), ItemAttributes(name=None, ignore=True),
+                 ItemAttributes(name='item', ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -293,10 +329,15 @@ class GrammarParser(RawTextParser):
         pos = self.mark()
         cut = False
         try:
-            self.expect_string('!')
-            cut = True
-            item = self.item()
-            node = self._wrap_node('negative_lookahead', {'item': item})
+            v0 = self.expect_string('!')
+            v1 = cut = True
+            v2 = self.item()
+            node = self._wrap_node(
+                'negative_lookahead',
+                [v0, v1, v2],
+                [ItemAttributes(name=None, ignore=False), ItemAttributes(name=None, ignore=True),
+                 ItemAttributes(name='item', ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -311,7 +352,11 @@ class GrammarParser(RawTextParser):
         cut = False
         try:
             v0 = self.expect_string('~')
-            node = self._wrap_node('cut', [v0])
+            node = self._wrap_node(
+                'cut',
+                [v0],
+                [ItemAttributes(name=None, ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -326,7 +371,11 @@ class GrammarParser(RawTextParser):
         cut = False
         try:
             v0 = self.expect_string('EOF')
-            node = self._wrap_node('eof_', [v0])
+            node = self._wrap_node(
+                'eof_',
+                [v0],
+                [ItemAttributes(name=None, ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -341,7 +390,11 @@ class GrammarParser(RawTextParser):
         cut = False
         try:
             v0 = self.cut()
-            node = self._wrap_node('item', [v0])
+            node = self._wrap_node(
+                'item',
+                [v0],
+                [ItemAttributes(name=None, ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -351,7 +404,11 @@ class GrammarParser(RawTextParser):
         cut = False
         try:
             v0 = self.eof_()
-            node = self._wrap_node('item', [v0])
+            node = self._wrap_node(
+                'item',
+                [v0],
+                [ItemAttributes(name=None, ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -361,7 +418,11 @@ class GrammarParser(RawTextParser):
         cut = False
         try:
             v0 = self.maybe()
-            node = self._wrap_node('item', [v0])
+            node = self._wrap_node(
+                'item',
+                [v0],
+                [ItemAttributes(name=None, ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -371,7 +432,11 @@ class GrammarParser(RawTextParser):
         cut = False
         try:
             v0 = self.one_or_more()
-            node = self._wrap_node('item', [v0])
+            node = self._wrap_node(
+                'item',
+                [v0],
+                [ItemAttributes(name=None, ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -381,7 +446,11 @@ class GrammarParser(RawTextParser):
         cut = False
         try:
             v0 = self.zero_or_more()
-            node = self._wrap_node('item', [v0])
+            node = self._wrap_node(
+                'item',
+                [v0],
+                [ItemAttributes(name=None, ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -391,7 +460,11 @@ class GrammarParser(RawTextParser):
         cut = False
         try:
             v0 = self.lookahead()
-            node = self._wrap_node('item', [v0])
+            node = self._wrap_node(
+                'item',
+                [v0],
+                [ItemAttributes(name=None, ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -401,7 +474,11 @@ class GrammarParser(RawTextParser):
         cut = False
         try:
             v0 = self.negative_lookahead()
-            node = self._wrap_node('item', [v0])
+            node = self._wrap_node(
+                'item',
+                [v0],
+                [ItemAttributes(name=None, ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -411,7 +488,11 @@ class GrammarParser(RawTextParser):
         cut = False
         try:
             v0 = self.atom()
-            node = self._wrap_node('item', [v0])
+            node = self._wrap_node(
+                'item',
+                [v0],
+                [ItemAttributes(name=None, ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -425,9 +506,13 @@ class GrammarParser(RawTextParser):
         pos = self.mark()
         cut = False
         try:
-            name = self._maybe(lambda *args: self.synthesized_rule_0())
-            item = self.item()
-            node = self._wrap_node('named_item', {'name': name, 'item': item})
+            v0 = self._maybe(lambda *args: self.synthesized_rule_0())
+            v1 = self.item()
+            node = self._wrap_node(
+                'named_item',
+                [v0, v1],
+                [ItemAttributes(name='name', ignore=False), ItemAttributes(name='item', ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -442,7 +527,11 @@ class GrammarParser(RawTextParser):
         cut = False
         try:
             v0 = self._repeat(1, lambda *args: self.named_item())
-            node = self._wrap_node('alternative', [v0])
+            node = self._wrap_node(
+                'alternative',
+                [v0],
+                [ItemAttributes(name=None, ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -456,12 +545,18 @@ class GrammarParser(RawTextParser):
         pos = self.mark()
         cut = False
         try:
-            alts = self.alternatives()
-            self.__()
-            self.expect_string('|')
-            cut = True
-            alt = self.alternative()
-            node = self._wrap_node('alternatives', {'alts': alts, 'alt': alt})
+            v0 = self.alternatives()
+            v1 = self.__()
+            v2 = self.expect_string('|')
+            v3 = cut = True
+            v4 = self.alternative()
+            node = self._wrap_node(
+                'alternatives',
+                [v0, v1, v2, v3, v4],
+                [ItemAttributes(name='alts', ignore=False), ItemAttributes(name=None, ignore=False),
+                 ItemAttributes(name=None, ignore=False), ItemAttributes(name=None, ignore=True),
+                 ItemAttributes(name='alt', ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -470,8 +565,12 @@ class GrammarParser(RawTextParser):
 
         cut = False
         try:
-            alt = self.alternative()
-            node = self._wrap_node('alternatives', {'alt': alt})
+            v0 = self.alternative()
+            node = self._wrap_node(
+                'alternatives',
+                [v0],
+                [ItemAttributes(name='alt', ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -485,12 +584,18 @@ class GrammarParser(RawTextParser):
         pos = self.mark()
         cut = False
         try:
-            name = self.rule_name()
-            self.expect_string(':')
-            cut = True
-            alts = self.alternatives()
-            self._repeat(1, lambda *args: self.expect_string('\n'))
-            node = self._wrap_node('rule', {'name': name, 'alts': alts})
+            v0 = self.rule_name()
+            v1 = self.expect_string(':')
+            v2 = cut = True
+            v3 = self.alternatives()
+            v4 = self._repeat(1, lambda *args: self.expect_string('\n'))
+            node = self._wrap_node(
+                'rule',
+                [v0, v1, v2, v3, v4],
+                [ItemAttributes(name='name', ignore=False), ItemAttributes(name=None, ignore=False),
+                 ItemAttributes(name=None, ignore=True), ItemAttributes(name='alts', ignore=False),
+                 ItemAttributes(name=None, ignore=False)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)
@@ -504,12 +609,18 @@ class GrammarParser(RawTextParser):
         pos = self.mark()
         cut = False
         try:
-            verbatim = self._repeat(0, lambda *args: self.verbatim_block())
-            settings = self._repeat(0, lambda *args: self.setting())
-            rules = self._repeat(1, lambda *args: self.rule())
-            cut = True
-            self.expect_eof()
-            node = self._wrap_node('grammar', {'verbatim': verbatim, 'settings': settings, 'rules': rules})
+            v0 = self._repeat(0, lambda *args: self.verbatim_block())
+            v1 = self._repeat(0, lambda *args: self.setting())
+            v2 = self._repeat(1, lambda *args: self.rule())
+            v3 = cut = True
+            v4 = self.expect_eof()
+            node = self._wrap_node(
+                'grammar',
+                [v0, v1, v2, v3, v4],
+                [ItemAttributes(name='verbatim', ignore=False), ItemAttributes(name='settings', ignore=False),
+                 ItemAttributes(name='rules', ignore=False), ItemAttributes(name=None, ignore=True),
+                 ItemAttributes(name=None, ignore=True)]
+            )
             return node
         except ParseError as e:
             self.rewind(pos)

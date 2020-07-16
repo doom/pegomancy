@@ -14,7 +14,11 @@ class ParserGenerator:
             var_names.append(var_name)
             attributes.append(item.attributes)
             print(f"            {var_name} = {cond}")
-        print(f"            node = self._wrap_node({rule.name!r}, [{', '.join(var_names)}], {attributes!r})")
+        print(f"            node = self._wrap_node(")
+        print(f"                {rule.name!r},")
+        print(f"                [{', '.join(var_names)}],")
+        print(f"                {attributes!r}")
+        print(f"            )")
         print(f"            return node")
 
     def _generate_alternative(self, alt: Alternative, rule: Rule):

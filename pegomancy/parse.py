@@ -178,6 +178,71 @@ class RawTextParser(BaseParser):
             values = getattr(self.rule_handler, rule_name)(values)
         return values
 
+    def _lookahead(self, f, *args):
+        """
+        Apply a rule without consuming any input, succeeding if the rule succeeds
+
+        :param f:                   the rule
+        :param args:                the arguments to pass to the rule
+        """
+        pos = self.mark()
+        result = f(*args)
+        self.rewind(pos)
+        return result
+
+    def _not_lookahead(self, f, *args):
+        """
+        Apply a rule without consuming any input, succeeding if the rule fails
+
+        :param f:                   the rule
+        :param args:                the arguments to pass to the rule
+        """
+        try:
+            self._lookahead(f, *args)
+        except ParseError:
+            pass
+        else:
+            raise self.make_error(message=f"unexpected {f.__name__}", pos=self.mark())
+
+    def _maybe(self, f, *args):
+        """
+        Apply a parsing rule, succeeding even if the rule fails
+
+        :param f:                   the rule
+        :param args:                the arguments to pass to the rule
+        """
+        pos = self.mark()
+        try:
+            return f(*args)
+        except ParseError:
+            self.rewind(pos)
+            return None
+
+    def _repeat(self, minimum, f, *args):
+        """
+        Repeat a rule multiple times
+
+        :param minimum:             the minimum number of times the rule must succeed
+        :param f:                   the rule
+        :param args:                the arguments to pass to the rule
+        """
+        pos = self.mark()
+        matches = []
+        while True:
+            last = self.mark()
+            try:
+                matches.append(f(*args))
+            except ParseError:
+                self.rewind(last)
+                break
+        if len(matches) >= minimum:
+            return matches
+        self.rewind(pos)
+        raise self.make_error(
+            message=f"expected at least {minimum} repetitions of a {f.__name__}",
+            pos=self.mark()
+        )
+
     @parsing_rule
     def expect_string(self, expected: str) -> str:
         """

@@ -3,7 +3,7 @@ from textwrap import dedent
 from typing import List
 
 from .grammar_parser import GrammarParser
-from .grammar_items import ItemAttributes, AbstractItem
+from .grammar_items import ItemAttributes, AbstractItem, NestedItemMixin
 
 
 class GrammarParserRuleHandler:
@@ -113,68 +113,48 @@ class RuleItem(AbstractItem):
 
 
 @dataclass
-class Maybe(AbstractItem):
+class Maybe(AbstractItem, NestedItemMixin):
     inner_item: AbstractItem
     attributes: ItemAttributes = field(default_factory=ItemAttributes)
 
     def generate_condition(self) -> str:
         return f"self._maybe(lambda *args: {self.inner_item.generate_condition()})"
 
-    @staticmethod
-    def is_nested() -> bool:
-        return True
-
 
 @dataclass
-class ZeroOrMore(AbstractItem):
+class ZeroOrMore(AbstractItem, NestedItemMixin):
     inner_item: AbstractItem
     attributes: ItemAttributes = field(default_factory=ItemAttributes)
 
     def generate_condition(self) -> str:
         return f"self._repeat(0, lambda *args: {self.inner_item.generate_condition()})"
 
-    @staticmethod
-    def is_nested() -> bool:
-        return True
-
 
 @dataclass
-class OneOrMore(AbstractItem):
+class OneOrMore(AbstractItem, NestedItemMixin):
     inner_item: AbstractItem
     attributes: ItemAttributes = field(default_factory=ItemAttributes)
 
     def generate_condition(self) -> str:
         return f"self._repeat(1, lambda *args: {self.inner_item.generate_condition()})"
 
-    @staticmethod
-    def is_nested() -> bool:
-        return True
-
 
 @dataclass
-class Lookahead(AbstractItem):
+class Lookahead(AbstractItem, NestedItemMixin):
     inner_item: AbstractItem
     attributes: ItemAttributes = field(default_factory=ItemAttributes)
 
     def generate_condition(self) -> str:
         return f"self._lookahead(lambda *args: {self.inner_item.generate_condition()})"
 
-    @staticmethod
-    def is_nested() -> bool:
-        return True
-
 
 @dataclass
-class NegativeLookahead(AbstractItem):
+class NegativeLookahead(AbstractItem, NestedItemMixin):
     inner_item: AbstractItem
     attributes: ItemAttributes = field(default_factory=ItemAttributes)
 
     def generate_condition(self) -> str:
         return f"self._not_lookahead(lambda *args: {self.inner_item.generate_condition()})"
-
-    @staticmethod
-    def is_nested() -> bool:
-        return True
 
 
 @dataclass

@@ -1,4 +1,4 @@
-from textwrap import dedent, indent
+from textwrap import dedent
 
 from .grammar import AbstractItem, Alternative, Grammar, Rule
 

@@ -24,3 +24,9 @@ class AbstractItem(metaclass=ABCMeta):
     @staticmethod
     def is_nested() -> bool:
         return False
+
+
+class NestedItemMixin:
+    @staticmethod
+    def is_nested() -> bool:
+        return True

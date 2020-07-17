@@ -118,7 +118,7 @@ class Maybe(AbstractItem, NestedItemMixin):
     attributes: ItemAttributes = field(default_factory=ItemAttributes)
 
     def generate_condition(self) -> str:
-        return f"self._maybe(lambda *args: {self.inner_item.generate_condition()})"
+        return f"self._maybe(lambda: {self.inner_item.generate_condition()})"
 
 
 @dataclass
@@ -127,7 +127,7 @@ class ZeroOrMore(AbstractItem, NestedItemMixin):
     attributes: ItemAttributes = field(default_factory=ItemAttributes)
 
     def generate_condition(self) -> str:
-        return f"self._repeat(0, lambda *args: {self.inner_item.generate_condition()})"
+        return f"self._repeat(0, lambda: {self.inner_item.generate_condition()})"
 
 
 @dataclass
@@ -136,7 +136,7 @@ class OneOrMore(AbstractItem, NestedItemMixin):
     attributes: ItemAttributes = field(default_factory=ItemAttributes)
 
     def generate_condition(self) -> str:
-        return f"self._repeat(1, lambda *args: {self.inner_item.generate_condition()})"
+        return f"self._repeat(1, lambda: {self.inner_item.generate_condition()})"
 
 
 @dataclass
@@ -145,7 +145,7 @@ class Lookahead(AbstractItem, NestedItemMixin):
     attributes: ItemAttributes = field(default_factory=ItemAttributes)
 
     def generate_condition(self) -> str:
-        return f"self._lookahead(lambda *args: {self.inner_item.generate_condition()})"
+        return f"self._lookahead(lambda: {self.inner_item.generate_condition()})"
 
 
 @dataclass
@@ -154,7 +154,7 @@ class NegativeLookahead(AbstractItem, NestedItemMixin):
     attributes: ItemAttributes = field(default_factory=ItemAttributes)
 
     def generate_condition(self) -> str:
-        return f"self._not_lookahead(lambda *args: {self.inner_item.generate_condition()})"
+        return f"self._not_lookahead(lambda: {self.inner_item.generate_condition()})"
 
 
 @dataclass

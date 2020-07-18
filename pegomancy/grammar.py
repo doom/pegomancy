@@ -15,25 +15,28 @@ class GrammarParserRuleHandler:
         self.synthesized_rules.append(rule)
         return rule.name
 
-    def rule_name(self, node):
-        return node
-
-    def literal(self, node):
+    @staticmethod
+    def literal(node):
         return LiteralItem(node[1])
 
-    def regex(self, node):
+    @staticmethod
+    def regex(node):
         return RegexItem(node[1].target)
 
-    def cut(self, _):
+    @staticmethod
+    def cut(_):
         return CutItem()
 
-    def eof_(self, _):
+    @staticmethod
+    def eof_(_):
         return EOFItem()
 
-    def lookahead(self, node):
+    @staticmethod
+    def lookahead(node):
         return Lookahead(node["item"])
 
-    def negative_lookahead(self, node):
+    @staticmethod
+    def negative_lookahead(node):
         return NegativeLookahead(node["item"])
 
     def atom(self, node):
@@ -43,43 +46,54 @@ class GrammarParserRuleHandler:
             return RuleItem(node["rule_name"])
         return node
 
-    def maybe(self, node):
+    @staticmethod
+    def maybe(node):
         return Maybe(node["atom"])
 
-    def one_or_more(self, node):
+    @staticmethod
+    def one_or_more(node):
         return OneOrMore(node["atom"])
 
-    def zero_or_more(self, node):
+    @staticmethod
+    def zero_or_more(node):
         return ZeroOrMore(node["atom"])
 
-    def maybe_sep_by(self, node):
+    @staticmethod
+    def maybe_sep_by(node):
         return MaybeSepBy(node["element"], node["separator"])
 
-    def sep_by(self, node):
+    @staticmethod
+    def sep_by(node):
         return SepBy(node["element"], node["separator"])
 
-    def named_item(self, node):
+    @staticmethod
+    def named_item(node):
         item = node["item"]
         name = node.get("name")
         if name is not None:
             item.attributes.name = name["name"]
         return item
 
-    def alternative(self, node):
+    @staticmethod
+    def alternative(node):
         return Alternative(node)
 
-    def alternatives(self, node):
+    @staticmethod
+    def alternatives(node):
         alts = node.get("alts") or []
         return alts + [node.get("alt")]
 
-    def rule(self, node):
+    @staticmethod
+    def rule(node):
         alts = node["alts"]
         return Rule(node["name"], alts)
 
-    def verbatim_block(self, node):
+    @staticmethod
+    def verbatim_block(node):
         return dedent(node["block"])
 
-    def setting(self, node):
+    @staticmethod
+    def setting(node):
         return node["setting"]
 
     def grammar(self, node):

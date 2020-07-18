@@ -52,6 +52,12 @@ class GrammarParserRuleHandler:
     def zero_or_more(self, node):
         return ZeroOrMore(node["atom"])
 
+    def maybe_sep_by(self, node):
+        return MaybeSepBy(node["element"], node["separator"])
+
+    def sep_by(self, node):
+        return SepBy(node["element"], node["separator"])
+
     def named_item(self, node):
         item = node["item"]
         name = node.get("name")
@@ -137,6 +143,26 @@ class OneOrMore(AbstractItem, NestedItemMixin):
 
     def generate_condition(self) -> str:
         return f"self._repeat(1, lambda: {self.inner_item.generate_condition()})"
+
+
+@dataclass
+class SepBy(AbstractItem, NestedItemMixin):
+    element_item: AbstractItem
+    separator_item: AbstractItem
+    attributes: ItemAttributes = field(default_factory=ItemAttributes)
+
+    def generate_condition(self) -> str:
+        return f"self._sep_by(lambda: {self.element_item.generate_condition()}, lambda: {self.separator_item.generate_condition()})"
+
+
+@dataclass
+class MaybeSepBy(AbstractItem, NestedItemMixin):
+    element_item: AbstractItem
+    separator_item: AbstractItem
+    attributes: ItemAttributes = field(default_factory=ItemAttributes)
+
+    def generate_condition(self) -> str:
+        return f"self._maybe_sep_by(lambda: {self.element_item.generate_condition()}, lambda: {self.separator_item.generate_condition()})"
 
 
 @dataclass

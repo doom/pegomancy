@@ -15,23 +15,13 @@
             return float(node)
 
         def list(self, node):
-            values = node["values"]
-            if isinstance(values, list):
-                if len(values) == 1:
-                    return values
-                return [values[0]] + [v["value"] for v in values[1]]
-            return []
+            return node["values"][::2]
 
         def field(self, node):
             return {node["key"]: node["value"]}
 
         def object(self, node):
-            fields = node["fields"]
-            if isinstance(fields, list):
-                if len(fields) == 1:
-                    return fields[0]
-                return reduce(lambda acc, new: {**acc, **new["field"]}, fields[1], fields[0])
-            return {}
+            return reduce(lambda acc, new: {**acc, **new}, node["fields"][::2])
 %}
 
 null: 'null'
@@ -45,13 +35,9 @@ string: '"' r'[^"]*' '"'
 float: r"[0-9]+\.[0-9]+"
 
 field: key:string ':' ~ value:value
-repeated_field: ',' ~ field:field
-object_fields: field repeated_field*
-object: '{' ~ fields:object_fields? '}'
+object: '{' ~ fields:{ field ','...}* '}'
 
-repeated_value: ',' ~ value:value
-list_values: value repeated_value*
-list: '[' ~ values:list_values? ']'
+list: '[' ~ values:{ value ','...}+ ']'
 
 value: null
      | boolean

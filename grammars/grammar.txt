@@ -18,6 +18,10 @@ one_or_more: atom:atom '+'
 
 zero_or_more: atom:atom '*'
 
+maybe_sep_by: '{' element:item separator:atom '...' '}' '*'
+
+sep_by: '{' element:item separator:atom '...' '}' '+'
+
 lookahead: '&' ~ item:item
 
 negative_lookahead: '!' ~ item:item
@@ -26,7 +30,7 @@ cut: '~'
 
 eof_: 'EOF'
 
-item: cut | eof_ | maybe | one_or_more | zero_or_more | lookahead | negative_lookahead | atom
+item: cut | eof_ | sep_by | maybe_sep_by | maybe | one_or_more | zero_or_more | lookahead | negative_lookahead | atom
 
 named_item: name:(name:r"[a-zA-Z_][a-zA-Z0-9_]*" ':')? item:item
 

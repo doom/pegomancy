@@ -239,6 +239,30 @@ class RawTextParser(BaseParser):
             pos=self.mark()
         )
 
+    def _sep_by(self, f, sep):
+        pos = self.mark()
+        try:
+            matches = [f()]
+            last = self.mark()
+            while True:
+                try:
+                    matches.append(sep())
+                except ParseError:
+                    self.rewind(last)
+                    break
+                matches.append(f())
+                last = self.mark()
+            return matches
+        except ParseError:
+            self.rewind(pos)
+            raise
+
+    def _maybe_sep_by(self, f, sep):
+        try:
+            return self._sep_by(f, sep)
+        except ParseError:
+            return []
+
     @parsing_rule
     def expect_string(self, expected: str) -> str:
         """

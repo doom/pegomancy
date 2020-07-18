@@ -34,7 +34,7 @@ class GrammarParser(RawTextParser):
         pos = self.mark()
         cut = False
         try:
-            v0 = self._maybe(lambda *args: self.expect_regex(r'[ \n\t]+'))
+            v0 = self._maybe(lambda: self.expect_regex(r'[ \n\t]+'))
             node = self._wrap_node(
                 '__',
                 [v0],
@@ -58,7 +58,7 @@ class GrammarParser(RawTextParser):
             v2 = self.expect_string('%{')
             v3 = self.expect_regex(r'^(.*?)(?=%})')
             v4 = self.expect_string('%}')
-            v5 = self._repeat(1, lambda *args: self.expect_string('\n'))
+            v5 = self._repeat(1, lambda: self.expect_string('\n'))
             node = self._wrap_node(
                 'verbatim_block',
                 [v0, v1, v2, v3, v4, v5],
@@ -83,7 +83,7 @@ class GrammarParser(RawTextParser):
             v1 = cut = True
             v2 = self.expect_regex(r'[ \t]+')
             v3 = self.expect_regex(r'[a-zA-Z_][a-zA-Z0-9_]*')
-            v4 = self._repeat(1, lambda *args: self.expect_string('\n'))
+            v4 = self._repeat(1, lambda: self.expect_string('\n'))
             node = self._wrap_node(
                 'setting',
                 [v0, v1, v2, v3, v4],
@@ -303,6 +303,58 @@ class GrammarParser(RawTextParser):
         raise self.make_error(message=f"expected a zero_or_more", pos=self.mark())
 
     @parsing_rule
+    def maybe_sep_by(self):
+        pos = self.mark()
+        cut = False
+        try:
+            v0 = self.expect_string('{')
+            v1 = self.item()
+            v2 = self.atom()
+            v3 = self.expect_string('...')
+            v4 = self.expect_string('}')
+            v5 = self.expect_string('*')
+            node = self._wrap_node(
+                'maybe_sep_by',
+                [v0, v1, v2, v3, v4, v5],
+                [ItemAttributes(name=None, ignore=False), ItemAttributes(name='element', ignore=False),
+                 ItemAttributes(name='separator', ignore=False), ItemAttributes(name=None, ignore=False),
+                 ItemAttributes(name=None, ignore=False), ItemAttributes(name=None, ignore=False)]
+            )
+            return node
+        except ParseError as e:
+            self.rewind(pos)
+            if cut is True:
+                raise CutError(e.message, e.location)
+
+        raise self.make_error(message=f"expected a maybe_sep_by", pos=self.mark())
+
+    @parsing_rule
+    def sep_by(self):
+        pos = self.mark()
+        cut = False
+        try:
+            v0 = self.expect_string('{')
+            v1 = self.item()
+            v2 = self.atom()
+            v3 = self.expect_string('...')
+            v4 = self.expect_string('}')
+            v5 = self.expect_string('+')
+            node = self._wrap_node(
+                'sep_by',
+                [v0, v1, v2, v3, v4, v5],
+                [ItemAttributes(name=None, ignore=False), ItemAttributes(name='element', ignore=False),
+                 ItemAttributes(name='separator', ignore=False), ItemAttributes(name=None, ignore=False),
+                 ItemAttributes(name=None, ignore=False), ItemAttributes(name=None, ignore=False)]
+            )
+            return node
+        except ParseError as e:
+            self.rewind(pos)
+            if cut is True:
+                raise CutError(e.message, e.location)
+
+        raise self.make_error(message=f"expected a sep_by", pos=self.mark())
+
+    @parsing_rule
     def lookahead(self):
         pos = self.mark()
         cut = False
@@ -417,6 +469,34 @@ class GrammarParser(RawTextParser):
 
         cut = False
         try:
+            v0 = self.sep_by()
+            node = self._wrap_node(
+                'item',
+                [v0],
+                [ItemAttributes(name=None, ignore=False)]
+            )
+            return node
+        except ParseError as e:
+            self.rewind(pos)
+            if cut is True:
+                raise CutError(e.message, e.location)
+
+        cut = False
+        try:
+            v0 = self.maybe_sep_by()
+            node = self._wrap_node(
+                'item',
+                [v0],
+                [ItemAttributes(name=None, ignore=False)]
+            )
+            return node
+        except ParseError as e:
+            self.rewind(pos)
+            if cut is True:
+                raise CutError(e.message, e.location)
+
+        cut = False
+        try:
             v0 = self.maybe()
             node = self._wrap_node(
                 'item',
@@ -506,7 +586,7 @@ class GrammarParser(RawTextParser):
         pos = self.mark()
         cut = False
         try:
-            v0 = self._maybe(lambda *args: self.synthesized_rule_0())
+            v0 = self._maybe(lambda: self.synthesized_rule_0())
             v1 = self.item()
             node = self._wrap_node(
                 'named_item',
@@ -526,7 +606,7 @@ class GrammarParser(RawTextParser):
         pos = self.mark()
         cut = False
         try:
-            v0 = self._repeat(1, lambda *args: self.named_item())
+            v0 = self._repeat(1, lambda: self.named_item())
             node = self._wrap_node(
                 'alternative',
                 [v0],
@@ -588,7 +668,7 @@ class GrammarParser(RawTextParser):
             v1 = self.expect_string(':')
             v2 = cut = True
             v3 = self.alternatives()
-            v4 = self._repeat(1, lambda *args: self.expect_string('\n'))
+            v4 = self._repeat(1, lambda: self.expect_string('\n'))
             node = self._wrap_node(
                 'rule',
                 [v0, v1, v2, v3, v4],
@@ -609,9 +689,9 @@ class GrammarParser(RawTextParser):
         pos = self.mark()
         cut = False
         try:
-            v0 = self._repeat(0, lambda *args: self.verbatim_block())
-            v1 = self._repeat(0, lambda *args: self.setting())
-            v2 = self._repeat(1, lambda *args: self.rule())
+            v0 = self._repeat(0, lambda: self.verbatim_block())
+            v1 = self._repeat(0, lambda: self.setting())
+            v2 = self._repeat(1, lambda: self.rule())
             v3 = cut = True
             v4 = self.expect_eof()
             node = self._wrap_node(

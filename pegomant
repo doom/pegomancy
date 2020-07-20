@@ -7,11 +7,16 @@ from pegomancy.generate import ParserGenerator
 ap = argparse.ArgumentParser()
 ap.add_argument("grammar_file", type=str)
 ap.add_argument("-c", "--class_name", type=str)
+ap.add_argument("-o", "--output-file", type=str)
 
 args = ap.parse_args()
 
 with open(args.grammar_file, 'r') as grammar_file:
     source = grammar_file.read()
 
+output_file = args.output_file
+if output_file is not None:
+    output_file = open(output_file, 'w')
+
 grammar = Grammar.from_specification(source)
-ParserGenerator().generate_parser(grammar, class_name=args.class_name)
+ParserGenerator().generate_parser(grammar, class_name=args.class_name, file=output_file)

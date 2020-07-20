@@ -10,16 +10,18 @@ This project is written using Python 3.8. It can be installed using setuptools o
 
 ### As a tool
 
-Pegomancy provides `pegomant` executable that can be used to generate Python code to parse data according to a given grammar specification.
+Pegomancy provides a `pegomant` executable that can be used to generate Python code to parse data according to a given grammar specification.
 
 ```
-usage: pegomant [-h] grammar_file
+usage: pegomant [-h] [-c CLASS_NAME] [-o OUTPUT_FILE] grammar_file
 
 positional arguments:
   grammar_file
 
 optional arguments:
-  -h, --help    show this help message and exit
+  -h, --help            show this help message and exit
+  -c CLASS_NAME, --class_name CLASS_NAME
+  -o OUTPUT_FILE, --output-file OUTPUT_FILE
 ```
 
 ### As a library
@@ -130,4 +132,4 @@ class RuleHandler:
         return node
 ```
 
-> The methods can return `None` to indicate a parse failure for the rule being handled.
+> The methods can raise a `ParseError` to indicate a parse failure for the rule being handled.
